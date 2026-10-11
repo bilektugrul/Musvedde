@@ -49,20 +49,26 @@ interface NoteDao {
     @Insert
     suspend fun insertAll(notes: List<NoteEntity>): List<Long>
 
-    @Query("UPDATE notes SET title = :title, body = :body, updatedAt = :updatedAt WHERE id = :id")
+    @Query("UPDATE notes SET title = :title, body = :body, updatedAt = :updatedAt WHERE id = :id AND (title != :title OR body != :body)")
     suspend fun updateContent(id: Long, title: String, body: String, updatedAt: Long): Int
 
-    @Query("UPDATE notes SET color = :color WHERE id IN (:ids)")
-    suspend fun setColor(ids: List<Long>, color: String)
+    @Query("UPDATE notes SET color = :color, updatedAt = :updatedAt WHERE id IN (:ids)")
+    suspend fun setColor(ids: List<Long>, color: String, updatedAt: Long)
 
-    @Query("UPDATE notes SET pinnedToTop = :pinned WHERE id IN (:ids)")
-    suspend fun setPinnedToTop(ids: List<Long>, pinned: Boolean)
+    @Query("UPDATE notes SET pinnedToTop = :pinned, updatedAt = :updatedAt WHERE id IN (:ids)")
+    suspend fun setPinnedToTop(ids: List<Long>, pinned: Boolean, updatedAt: Long)
 
     @Query("UPDATE notes SET pinnedToNotification = :pinned WHERE id = :id")
     suspend fun setPinnedToNotification(id: Long, pinned: Boolean)
 
-    @Query("UPDATE notes SET state = :state, trashedAt = :trashedAt WHERE id IN (:ids)")
-    suspend fun setState(ids: List<Long>, state: String, trashedAt: Long?)
+    @Query(
+        """
+        UPDATE notes SET state = :state, trashedAt = :trashedAt, updatedAt = :updatedAt,
+            pinnedToNotification = CASE WHEN :state = 'ACTIVE' THEN pinnedToNotification ELSE 0 END
+        WHERE id IN (:ids)
+        """,
+    )
+    suspend fun setState(ids: List<Long>, state: String, trashedAt: Long?, updatedAt: Long)
 
     @Query("UPDATE notes SET position = :position WHERE id = :id")
     suspend fun setPosition(id: Long, position: Long)
@@ -72,6 +78,9 @@ interface NoteDao {
 
     @Query("SELECT MAX(position) FROM notes")
     suspend fun maxPosition(): Long?
+
+    @Query("DELETE FROM notes WHERE id = :id AND trim(title, ' ' || char(9, 10, 13)) = '' AND trim(body, ' ' || char(9, 10, 13)) = ''")
+    suspend fun deleteIfBlank(id: Long)
 
     @Query("DELETE FROM notes WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: List<Long>)
