@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+data class NoteContentKey(val title: String, val body: String, val createdAt: Long)
+
 private const val SUMMARY_COLUMNS = """
     n.id, n.title, substr(n.body, 1, 400) AS preview, n.color, n.pinnedToTop, n.pinnedToNotification,
     n.position, n.updatedAt,
@@ -99,6 +101,12 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes ORDER BY id LIMIT :limit OFFSET :offset")
     suspend fun pageAll(limit: Int, offset: Int): List<NoteEntity>
+
+    @Query("SELECT * FROM notes WHERE id > :afterId ORDER BY id LIMIT :limit")
+    suspend fun pageAfter(afterId: Long, limit: Int): List<NoteEntity>
+
+    @Query("SELECT title, body, createdAt FROM notes")
+    suspend fun contentKeys(): List<NoteContentKey>
 
     @Query("DELETE FROM notes")
     suspend fun deleteAll()
