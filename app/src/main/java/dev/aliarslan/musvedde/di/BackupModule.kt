@@ -33,6 +33,10 @@ object BackupModule {
     @Provides
     @Named(BackupManager.CACHE_DIR)
     fun backupCacheDir(@ApplicationContext context: Context): File = context.cacheDir
+
+    @Provides
+    @Named(BackupManager.SAFETY_DIR)
+    fun safetyBackupDir(@ApplicationContext context: Context): File = File(context.filesDir, "safety-backups")
 }
 
 @Module

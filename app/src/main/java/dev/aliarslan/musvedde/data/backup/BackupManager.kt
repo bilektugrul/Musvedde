@@ -30,6 +30,7 @@ class BackupManager @Inject constructor(
     private val logger: ErrorLogger,
     private val clock: Clock,
     @param:Named(CACHE_DIR) private val cacheDir: File,
+    @param:Named(SAFETY_DIR) private val safetyDir: File,
 ) {
     private val running = Mutex()
 
@@ -72,6 +73,20 @@ class BackupManager @Inject constructor(
         }
     }
 
+    suspend fun safetyBackup(): File = running.withLock {
+        withContext(Dispatchers.IO) {
+            safetyDir.mkdirs()
+            val file = File(safetyDir, BackupSerializer.fileName(clock.now()))
+            file.outputStream().buffered().use { serializer.write(it) }
+            safetyDir.listFiles { f -> f.name.startsWith(BackupSerializer.FILE_PREFIX) }
+                .orEmpty()
+                .sortedByDescending { it.name }
+                .drop(SAFETY_KEEP)
+                .forEach { it.delete() }
+            file
+        }
+    }
+
     private suspend fun applyRetention(target: BackupTarget, keep: Int) {
         target.list()
             .filter { it.name.startsWith(BackupSerializer.FILE_PREFIX) && it.name.endsWith(".zip") }
@@ -104,6 +119,8 @@ class BackupManager @Inject constructor(
 
     companion object {
         const val CACHE_DIR = "backupCacheDir"
+        const val SAFETY_DIR = "safetyBackupDir"
+        private const val SAFETY_KEEP = 3
 
         fun sourceOf(targetId: String) = if (targetId == BackupTarget.DRIVE) "Drive" else "Backup"
     }

@@ -76,7 +76,10 @@ class BackupManagerTest {
         logger = logger,
         clock = clock,
         cacheDir = tmp.root,
+        safetyDir = safetyDir,
     )
+
+    private val safetyDir by lazy { tmp.newFolder("safety") }
 
     @After
     fun tearDown() = db.close()
@@ -170,6 +173,32 @@ class BackupManagerTest {
         assertThat(s.lastDriveBackupError).contains("network down")
         assertThat(s.lastFolderBackupError).isNull()
         assertThat(logger.errors.map { it.first }).containsExactly("Drive")
+    }
+
+    @Test
+    fun safetyBackupWorksWithoutTargets() = runTest {
+        notes.create("", "kaybolmasın")
+        folder.ready = false
+
+        val file = manager(folder).safetyBackup()
+
+        val content = BackupSerializer(db, clock).read(file.inputStream())
+        assertThat(content.notes.single().body).isEqualTo("kaybolmasın")
+        assertThat(file.parentFile).isEqualTo(safetyDir)
+    }
+
+    @Test
+    fun safetyBackupsKeepNewestThree() = runTest {
+        repeat(5) {
+            manager().safetyBackup()
+            now += 1_000
+        }
+
+        assertThat(safetyDir.listFiles()!!.map { it.name }).containsExactly(
+            BackupSerializer.fileName(now - 3_000),
+            BackupSerializer.fileName(now - 2_000),
+            BackupSerializer.fileName(now - 1_000),
+        )
     }
 
     @Test

@@ -162,7 +162,7 @@ class SettingsViewModel @Inject constructor(
         _restoring.value = true
         appScope.launch {
             try {
-                if (mode == RestoreMode.REPLACE) backupManager.backupNow(scheduled = false)
+                if (mode == RestoreMode.REPLACE) backupManager.safetyBackup()
                 val result = runCatching { open() }.fold(
                     onSuccess = { stream -> stream.use { restoreService.restoreFrom(it, mode) } },
                     onFailure = { Result.failure(it) },

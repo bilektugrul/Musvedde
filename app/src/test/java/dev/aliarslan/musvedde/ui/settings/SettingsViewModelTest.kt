@@ -88,6 +88,7 @@ class SettingsViewModelTest {
                 logger = logger,
                 clock = clock,
                 cacheDir = tmp.root,
+                safetyDir = tmp.newFolder("safety"),
             ),
             restoreService = RestoreService(db, serializer),
             driveAuth = DriveAuth(context),
