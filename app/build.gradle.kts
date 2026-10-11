@@ -47,6 +47,8 @@ android {
         localeFilters += listOf("en", "tr")
     }
 
+    sourceSets.getByName("debug").assets.directories.add("$projectDir/schemas")
+
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
@@ -122,4 +124,5 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.androidx.room.testing)
 }

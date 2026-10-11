@@ -27,4 +27,7 @@ object DatabaseModule {
 
     @Provides
     fun errorLogDao(db: MusveddeDatabase) = db.errorLogDao()
+
+    @Provides
+    fun noteVersionDao(db: MusveddeDatabase) = db.noteVersionDao()
 }
