@@ -21,14 +21,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val ZERO_WIDTH_SPACE = '​'
-
 /**
- * The system collapses consecutive line breaks in a notification's big text, so blank lines get a
- * zero-width space to keep the gaps between paragraphs.
+ * Android 16 normalizes a notification's big text: it drops zero-width and other invisible characters,
+ * collapses whitespace and removes lines that end up empty. A braille blank is none of those, so a line
+ * holding just that survives and is drawn as an empty line.
  */
+private const val BLANK_LINE_MARKER = '⠀'
+
 fun keepBlankLines(text: String): String =
-    text.trimEnd().lines().joinToString("\n") { line -> if (line.isBlank()) ZERO_WIDTH_SPACE.toString() else line }
+    text.trimEnd().lines().joinToString("\n") { line -> if (line.isBlank()) BLANK_LINE_MARKER.toString() else line }
 
 @Singleton
 class PinnedNoteNotifier @Inject constructor(

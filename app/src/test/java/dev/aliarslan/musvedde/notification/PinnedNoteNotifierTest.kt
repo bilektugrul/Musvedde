@@ -138,18 +138,34 @@ class PinnedNoteNotifierTest {
     }
 
     @Test
-    fun blankLinesSurviveInTheExpandedText() = runTest(dispatcher) {
+    fun blankLinesSurviveTheSystemNormalizer() = runTest(dispatcher) {
         val id = notes.create("", "X\n\nY\n\n\nZ\n")
         notes.setPinnedToNotification(id, true)
         advanceUntilIdle()
 
-        assertThat(posted().single().bigText()).isEqualTo("X\n​\nY\n​\n​\nZ")
+        val shown = systemNormalized(posted().single().bigText()!!)
+        assertThat(shown.lines().map { it.isBlankLooking() }).containsExactly(false, true, false, true, true, false).inOrder()
     }
 
     @Test
     fun keepBlankLinesLeavesOtherLinesAlone() {
-        assertThat(keepBlankLines("a\n  \nb")).isEqualTo("a\n​\nb")
+        assertThat(keepBlankLines("a\n  \nb").lines()[0]).isEqualTo("a")
+        assertThat(keepBlankLines("a\n  \nb").lines()[2]).isEqualTo("b")
         assertThat(keepBlankLines("tek satır")).isEqualTo("tek satır")
         assertThat(keepBlankLines("son\n\n")).isEqualTo("son")
     }
+
+    private fun String.isBlankLooking() = all { it == '⠀' }
+
+    // Mirrors the rules Android 16's notification big text normalizer applies: invisible and zero-width
+    // characters are dropped, whitespace runs become one space, lines are trimmed and empty lines removed.
+    private fun systemNormalized(text: String): String = text
+        .split(Regex("[\\n\\r\\u000B\\u000C\\u0085\\u2028\\u2029]+"))
+        .map { line ->
+            line.filterNot { it in '​'..'‍' || it == '﻿' || it == '͏' || it in '⁠'..'⁥' || it in '⁪'..'⁯' || it in '￹'..'￻' }
+                .replace(Regex("\\p{Zs}+"), " ")
+                .trim()
+        }
+        .filter { it.isNotEmpty() }
+        .joinToString("\n")
 }
