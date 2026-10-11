@@ -2,10 +2,12 @@ package dev.aliarslan.musvedde.data.db
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import kotlin.coroutines.CoroutineContext
 
-fun inMemoryDatabase(): MusveddeDatabase =
+fun inMemoryDatabase(queryContext: CoroutineContext? = null): MusveddeDatabase =
     Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), MusveddeDatabase::class.java)
         .allowMainThreadQueries()
+        .apply { if (queryContext != null) setQueryCoroutineContext(queryContext) }
         .build()
 
 fun noteEntity(

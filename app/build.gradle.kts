@@ -46,7 +46,7 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
-            it.maxHeapSize = "1g"
+            it.maxHeapSize = "768m"
             it.jvmArgs("-XX:+UseSerialGC")
             providers.gradleProperty("robolectricDependencyDir").orNull?.let { dir ->
                 it.systemProperty("robolectric.offline", "true")
