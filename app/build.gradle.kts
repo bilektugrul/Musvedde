@@ -44,13 +44,14 @@ android {
 
     androidResources {
         generateLocaleConfig = true
+        localeFilters += listOf("en", "tr")
     }
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
             it.maxHeapSize = "768m"
-            it.jvmArgs("-XX:+UseSerialGC")
+            it.jvmArgs("-XX:+UseSerialGC", "-XX:TieredStopAtLevel=1")
             providers.gradleProperty("robolectricDependencyDir").orNull?.let { dir ->
                 it.systemProperty("robolectric.offline", "true")
                 it.systemProperty("robolectric.dependency.dir", dir)
