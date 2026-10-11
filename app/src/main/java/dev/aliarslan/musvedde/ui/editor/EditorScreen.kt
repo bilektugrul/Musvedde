@@ -33,7 +33,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -343,25 +347,43 @@ private fun EditorFields(
     val titleStyle = remember(bodyStyle) {
         bodyStyle.copy(fontSize = (fontSize * 1.25f).sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
     }
+    var zoomScale by remember { mutableFloatStateOf(1f) }
+    var zoomOrigin by remember { mutableStateOf(TransformOrigin.Center) }
     val zoomModifier = if (settings.pinchZoom) {
-        Modifier.pointerInput(Unit) {
-            awaitEachGesture {
-                awaitFirstDown(requireUnconsumed = false)
-                var zoomed = false
-                do {
-                    val event = awaitPointerEvent()
-                    if (event.changes.count { it.pressed } >= 2) {
-                        val zoom = event.calculateZoom()
-                        if (zoom != 1f) {
-                            zoomed = true
-                            fontSize = (fontSize * zoom).coerceIn(AppSettings.EDITOR_FONT_SIZE_RANGE)
-                            event.changes.forEach { it.consume() }
+        Modifier
+            .clipToBounds()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var zoomed = false
+                    do {
+                        val event = awaitPointerEvent()
+                        if (event.changes.count { it.pressed } >= 2) {
+                            val zoom = event.calculateZoom()
+                            if (zoom != 1f) {
+                                if (!zoomed) {
+                                    val centroid = event.calculateCentroid(useCurrent = true)
+                                    zoomOrigin = TransformOrigin(centroid.x / size.width, centroid.y / size.height)
+                                }
+                                zoomed = true
+                                zoomScale = nextZoomScale(zoomScale, zoom, fontSize, AppSettings.EDITOR_FONT_SIZE_RANGE)
+                                event.changes.forEach { it.consume() }
+                            }
                         }
+                    } while (event.changes.any { it.pressed })
+                    if (zoomed) {
+                        // While pinching only the layer scales; the text is laid out again once, at the new size.
+                        fontSize = zoomedFontSize(fontSize, zoomScale, AppSettings.EDITOR_FONT_SIZE_RANGE)
+                        zoomScale = 1f
+                        onFontSizeCommitted(fontSize)
                     }
-                } while (event.changes.any { it.pressed })
-                if (zoomed) onFontSizeCommitted(fontSize)
+                }
             }
-        }
+            .graphicsLayer {
+                scaleX = zoomScale
+                scaleY = zoomScale
+                transformOrigin = zoomOrigin
+            }
     } else {
         Modifier
     }
