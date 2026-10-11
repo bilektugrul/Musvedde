@@ -64,6 +64,7 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
     onBack: () -> Unit,
     onErrorLog: () -> Unit,
+    onStorage: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -126,6 +127,10 @@ fun SettingsScreen(
                     onRestore = { showRestore = true },
                     onDriveSetup = { showDriveSetup = true },
                 )
+            }
+            item {
+                SectionHeader(stringResource(R.string.settings_section_storage))
+                ActionRow(stringResource(R.string.storage_title), stringResource(R.string.settings_storage_summary), onClick = onStorage)
             }
             item {
                 SectionHeader(stringResource(R.string.settings_section_troubleshooting))

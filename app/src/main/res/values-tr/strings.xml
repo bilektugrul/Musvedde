@@ -211,4 +211,23 @@
     <string name="history_show_changes">Önceki sürüme göre değişiklikleri göster</string>
     <string name="history_change">+%1$d / −%2$d satır</string>
     <string name="history_first">İlk sürüm</string>
+    <string name="storage_title">Depolama</string>
+    <string name="settings_section_storage">Depolama</string>
+    <string name="settings_storage_summary">Notların ve sürüm geçmişinin kapladığı alan</string>
+    <string name="storage_on_device">Bu telefonda kaplanan alan</string>
+    <string name="storage_database">Veritabanı (notlar, etiketler, geçmiş)</string>
+    <string name="storage_safety_backups">Güvenlik yedekleri</string>
+    <string name="storage_text_note">Metin boyutları yazının ham boyutudur. Veritabanı arama dizinini ve etiketleri de tuttuğu için daha büyüktür.</string>
+    <string name="storage_clear_all">Tüm sürüm geçmişini temizle</string>
+    <string name="storage_clear_all_confirm">Tüm notların kayıtlı tüm sürümleri silinsin mi? Notların olduğu gibi kalır.</string>
+    <string name="storage_notes_header">Boyuta göre notlar</string>
+    <string name="storage_note_detail">Not %1$s · %2$s %3$s</string>
+    <plurals name="storage_notes_count">
+        <item quantity="one">%d not</item>
+        <item quantity="other">%d not</item>
+    </plurals>
+    <plurals name="storage_versions_count">
+        <item quantity="one">%d sürüm</item>
+        <item quantity="other">%d sürüm</item>
+    </plurals>
 </resources>

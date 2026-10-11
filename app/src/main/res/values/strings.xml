@@ -212,4 +212,23 @@
     <string name="history_show_changes">Show changes from the previous version</string>
     <string name="history_change">+%1$d / −%2$d lines</string>
     <string name="history_first">First version</string>
+    <string name="storage_title">Storage</string>
+    <string name="settings_section_storage">Storage</string>
+    <string name="settings_storage_summary">Space used by notes and their version history</string>
+    <string name="storage_on_device">Space used on this phone</string>
+    <string name="storage_database">Database (notes, labels, history)</string>
+    <string name="storage_safety_backups">Safety backups</string>
+    <string name="storage_text_note">Text sizes are the raw size of the writing. The database also holds the search index and labels, so it is larger.</string>
+    <string name="storage_clear_all">Clear all version history</string>
+    <string name="storage_clear_all_confirm">Delete every saved version of every note? Your notes stay as they are.</string>
+    <string name="storage_notes_header">Notes by size</string>
+    <string name="storage_note_detail">Note %1$s · %2$s %3$s</string>
+    <plurals name="storage_notes_count">
+        <item quantity="one">%d note</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
+    <plurals name="storage_versions_count">
+        <item quantity="one">%d version</item>
+        <item quantity="other">%d versions</item>
+    </plurals>
 </resources>
