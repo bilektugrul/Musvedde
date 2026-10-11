@@ -80,6 +80,8 @@ class EditorViewModel @Inject constructor(
     @Volatile
     private var noteId: Long? = savedStateHandle.get<Long>("noteId")?.takeIf { it > 0 }
 
+    val isNewNote: Boolean = noteId == null
+
     private val saver = PendingSaver(appScope) { draft -> persist(draft) }
 
     private var finished = false

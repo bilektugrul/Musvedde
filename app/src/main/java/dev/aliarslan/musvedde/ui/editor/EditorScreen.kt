@@ -11,6 +11,19 @@ import androidx.compose.ui.platform.LocalContext
 import dev.aliarslan.musvedde.notification.rememberNotificationPermissionRequester
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -178,6 +191,7 @@ fun EditorScreen(
                     body = viewModel.body,
                     settings = settings,
                     focusMode = focusMode,
+                    autoFocusBody = viewModel.isNewNote,
                     onFontSizeCommitted = viewModel::setFontSize,
                 )
             }
@@ -311,6 +325,7 @@ private fun EditorFields(
     body: TextFieldState,
     settings: AppSettings,
     focusMode: Boolean,
+    autoFocusBody: Boolean,
     onFontSizeCommitted: (Float) -> Unit,
 ) {
     val onSurface = MaterialTheme.colorScheme.onSurface
@@ -351,24 +366,81 @@ private fun EditorFields(
         Modifier
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .then(zoomModifier)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = if (focusMode) 48.dp else 8.dp),
-    ) {
-        if (!focusMode || title.text.isNotEmpty()) {
-            HintedField(title, titleStyle, stringResource(R.string.editor_title_hint), hint, singleLine = true)
+    val titleFocus = remember { FocusRequester() }
+    val bodyFocus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    var contentCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var titleBounds by remember { mutableStateOf<Rect?>(null) }
+    var bodyBounds by remember { mutableStateOf<Rect?>(null) }
+    val bodyLayout = remember { arrayOfNulls<() -> TextLayoutResult?>(1) }
+    val showTitle = !focusMode || title.text.isNotEmpty()
+
+    LaunchedEffect(autoFocusBody) {
+        if (autoFocusBody) {
+            bodyFocus.requestFocus()
+            keyboard?.show()
         }
-        HintedField(
-            body,
-            bodyStyle,
-            stringResource(R.string.editor_body_hint),
-            hint,
-            singleLine = false,
-            modifier = Modifier.padding(top = 12.dp, bottom = 120.dp).testTag("editor_body"),
-        )
+    }
+
+    fun focus(requester: FocusRequester, state: TextFieldState, offset: Int?) {
+        state.edit { selection = TextRange(offset?.coerceIn(0, length) ?: length) }
+        requester.requestFocus()
+        keyboard?.show()
+    }
+
+    fun onTap(offset: Offset) {
+        val coords = contentCoords ?: return
+        val bodyRect = bodyBounds ?: return
+        val root = coords.localToRoot(offset)
+        when (val action = resolveTap(root.x, root.y, titleBounds.takeIf { showTitle }, bodyRect)) {
+            TapAction.Ignore -> Unit
+            TapAction.TitleEnd -> focus(titleFocus, title, null)
+            TapAction.BodyEnd -> focus(bodyFocus, body, null)
+            is TapAction.BodyLineEnd -> {
+                val layout = bodyLayout[0]?.invoke()
+                val lineEnd = layout?.let { it.getLineEnd(it.getLineForVerticalPosition(action.yInBody), visibleEnd = true) }
+                focus(bodyFocus, body, lineEnd)
+            }
+        }
+    }
+
+    BoxWithConstraints(Modifier.fillMaxSize().then(zoomModifier)) {
+        val viewportHeight = maxHeight
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = viewportHeight)
+                .onGloballyPositioned { contentCoords = it }
+                .pointerInput(Unit) { detectTapGestures(onTap = ::onTap) }
+                .padding(horizontal = 20.dp, vertical = if (focusMode) 48.dp else 8.dp),
+        ) {
+            if (showTitle) {
+                HintedField(
+                    title,
+                    titleStyle,
+                    stringResource(R.string.editor_title_hint),
+                    hint,
+                    singleLine = true,
+                    modifier = Modifier
+                        .focusRequester(titleFocus)
+                        .onGloballyPositioned { titleBounds = it.boundsInRoot() },
+                )
+            }
+            HintedField(
+                body,
+                bodyStyle,
+                stringResource(R.string.editor_body_hint),
+                hint,
+                singleLine = false,
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 120.dp)
+                    .testTag("editor_body")
+                    .focusRequester(bodyFocus)
+                    .onGloballyPositioned { bodyBounds = it.boundsInRoot() },
+                onTextLayout = { bodyLayout[0] = it },
+            )
+        }
     }
 }
 
@@ -380,10 +452,12 @@ private fun HintedField(
     hintColor: Color,
     singleLine: Boolean,
     modifier: Modifier = Modifier,
+    onTextLayout: ((() -> TextLayoutResult?) -> Unit)? = null,
 ) {
     BasicTextField(
         state = state,
         textStyle = style,
+        onTextLayout = onTextLayout?.let { callback -> { getResult -> callback(getResult) } },
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         lineLimits = if (singleLine) TextFieldLineLimits.SingleLine else TextFieldLineLimits.MultiLine(),
         modifier = modifier.fillMaxWidth(),
