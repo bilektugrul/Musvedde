@@ -47,6 +47,10 @@ android {
     }
 }
 
+composeCompiler {
+    stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("app/compose-stability.conf"))
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
