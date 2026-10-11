@@ -4,7 +4,7 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
 
 enum class ListLayout { GRID, LIST }
 
-enum class EditorFont { SERIF, SANS, MONO }
+enum class EditorFont { SERIF, SYSTEM, GOOGLE_SANS, MONO }
 
 enum class EditorAlign { START, CENTER }
 

@@ -23,6 +23,20 @@ val Literata = FontFamily(
     literata(FontWeight.Bold),
 )
 
+@OptIn(ExperimentalTextApi::class)
+private fun googleSans(weight: FontWeight) = Font(
+    R.font.google_sans,
+    weight = weight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+)
+
+val GoogleSans = FontFamily(
+    googleSans(FontWeight.Normal),
+    googleSans(FontWeight.Medium),
+    googleSans(FontWeight.SemiBold),
+    googleSans(FontWeight.Bold),
+)
+
 val MusveddeTypography = Typography().let { base ->
     base.copy(
         titleLarge = base.titleLarge.copy(fontFamily = Literata, fontWeight = FontWeight.SemiBold),
@@ -33,6 +47,7 @@ val MusveddeTypography = Typography().let { base ->
 
 fun EditorFont.fontFamily(): FontFamily = when (this) {
     EditorFont.SERIF -> Literata
-    EditorFont.SANS -> FontFamily.SansSerif
+    EditorFont.SYSTEM -> FontFamily.Default
+    EditorFont.GOOGLE_SANS -> GoogleSans
     EditorFont.MONO -> FontFamily.Monospace
 }

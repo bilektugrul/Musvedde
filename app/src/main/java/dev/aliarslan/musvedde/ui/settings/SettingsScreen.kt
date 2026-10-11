@@ -238,7 +238,8 @@ private fun AccessibilitySection(s: Settings, update: ((Settings) -> Settings) -
             stringResource(
                 when (it) {
                     EditorFont.SERIF -> R.string.font_serif
-                    EditorFont.SANS -> R.string.font_sans
+                    EditorFont.SYSTEM -> R.string.font_system
+                    EditorFont.GOOGLE_SANS -> R.string.font_google_sans
                     EditorFont.MONO -> R.string.font_mono
                 },
             )

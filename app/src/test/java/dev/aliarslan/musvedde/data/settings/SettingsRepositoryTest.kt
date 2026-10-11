@@ -42,6 +42,7 @@ class SettingsRepositoryTest {
                 lastFolderBackupAt = 123L,
                 lastDriveBackupError = "boom",
                 animationSpeed = AnimationSpeed.SLOW,
+                editorFont = EditorFont.GOOGLE_SANS,
             )
         }
         repository.update { it.copy(lastDriveBackupError = null) }
@@ -53,6 +54,7 @@ class SettingsRepositoryTest {
         assertThat(settings.lastFolderBackupAt).isEqualTo(123L)
         assertThat(settings.lastDriveBackupError).isNull()
         assertThat(settings.animationSpeed).isEqualTo(AnimationSpeed.SLOW)
+        assertThat(settings.editorFont).isEqualTo(EditorFont.GOOGLE_SANS)
     }
 
     @Test

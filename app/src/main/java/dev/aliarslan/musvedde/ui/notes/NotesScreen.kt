@@ -290,6 +290,7 @@ private fun LazyStaggeredGridScope.noteItems(
                 labelNames = labelNames,
                 selected = note.id in state.selection,
                 previewSize = state.previewSize,
+                previewFont = state.previewFont,
                 modifier = Modifier
                     .testTag("note_card")
                     .then(dragModifier)

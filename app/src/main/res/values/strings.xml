@@ -110,7 +110,6 @@
     <string name="settings_editor_line_height">Line spacing</string>
     <string name="settings_editor_font">Editor font</string>
     <string name="font_serif">Serif (Literata)</string>
-    <string name="font_sans">Sans serif</string>
     <string name="font_mono">Monospace</string>
     <string name="settings_editor_align">Alignment</string>
     <string name="align_start">Left</string>
@@ -199,4 +198,6 @@
     <string name="drive_setup_open_console">Open Google Cloud Console</string>
     <string name="drive_setup_connect">Connect</string>
     <string name="drive_setup_copy">Copy %1$s</string>
+    <string name="font_system">System font</string>
+    <string name="font_google_sans">Google Sans</string>
 </resources>

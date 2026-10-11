@@ -21,9 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.aliarslan.musvedde.R
+import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.NoteSummary
 import dev.aliarslan.musvedde.domain.PreviewSize
-import dev.aliarslan.musvedde.ui.theme.Literata
+import dev.aliarslan.musvedde.ui.theme.fontFamily
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 import dev.aliarslan.musvedde.ui.theme.noteContainerColor
 import kotlinx.collections.immutable.ImmutableMap
@@ -34,6 +35,7 @@ fun NoteCard(
     labelNames: ImmutableMap<Long, String>,
     selected: Boolean,
     previewSize: PreviewSize,
+    previewFont: EditorFont,
     modifier: Modifier = Modifier,
 ) {
     val appearance = LocalAppearance.current
@@ -66,7 +68,7 @@ fun NoteCard(
             if (note.preview.isNotBlank()) {
                 Text(
                     note.preview.trimEnd(),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = Literata),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = previewFont.fontFamily()),
                     color = textColor,
                     maxLines = previewSize.maxLines,
                     overflow = TextOverflow.Ellipsis,

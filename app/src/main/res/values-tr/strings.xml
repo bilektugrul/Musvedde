@@ -109,7 +109,6 @@
     <string name="settings_editor_line_height">Satır aralığı</string>
     <string name="settings_editor_font">Editör yazı tipi</string>
     <string name="font_serif">Serif (Literata)</string>
-    <string name="font_sans">Sans serif</string>
     <string name="font_mono">Eş aralıklı</string>
     <string name="settings_editor_align">Hizalama</string>
     <string name="align_start">Sola</string>
@@ -198,4 +197,6 @@
     <string name="drive_setup_open_console">Google Cloud Console\'u aç</string>
     <string name="drive_setup_connect">Bağlan</string>
     <string name="drive_setup_copy">%1$s kopyala</string>
+    <string name="font_system">Sistem yazı tipi</string>
+    <string name="font_google_sans">Google Sans</string>
 </resources>

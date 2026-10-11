@@ -9,6 +9,7 @@ import dev.aliarslan.musvedde.data.note.NoteFilter
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
+import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.Label
 import dev.aliarslan.musvedde.domain.ListLayout
 import dev.aliarslan.musvedde.domain.NoteColor
@@ -48,6 +49,7 @@ data class NotesUiState(
     val others: ImmutableList<NoteSummary> = persistentListOf(),
     val layout: ListLayout = ListLayout.GRID,
     val previewSize: PreviewSize = PreviewSize.MEDIUM,
+    val previewFont: EditorFont = EditorFont.SERIF,
     val selection: ImmutableSet<Long> = persistentSetOf(),
     val query: String = "",
     val canReorder: Boolean = false,
@@ -102,6 +104,7 @@ class NotesViewModel @Inject constructor(
             others = if (groupPinned) list.filterNot { it.pinnedToTop }.toImmutableList() else list,
             layout = s.listLayout,
             previewSize = s.previewSize,
+            previewFont = s.editorFont,
             selection = selected,
             query = q,
             canReorder = q.isBlank() && section == NotesSection.ACTIVE,
