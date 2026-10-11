@@ -1,16 +1,15 @@
 package dev.aliarslan.musvedde.ui.editor
 
-import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 @Composable
 fun FocusModeEffect(enabled: Boolean) {
-    val window = (LocalContext.current as? Activity)?.window ?: return
+    val window = LocalActivity.current?.window ?: return
     DisposableEffect(enabled, window) {
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         if (enabled) {

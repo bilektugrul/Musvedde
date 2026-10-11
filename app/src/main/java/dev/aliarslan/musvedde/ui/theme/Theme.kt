@@ -1,9 +1,9 @@
 package dev.aliarslan.musvedde.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
@@ -138,7 +138,7 @@ fun MusveddeTheme(settings: Settings, content: @Composable () -> Unit) {
 
 @Composable
 private fun SystemBarsEffect(dark: Boolean, background: Color) {
-    val activity = LocalContext.current as? Activity ?: return
+    val activity = LocalActivity.current ?: return
     DisposableEffect(dark, background) {
         (activity as? ComponentActivity)?.enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(Color.Transparent.toArgb(), Color.Transparent.toArgb()) { dark },

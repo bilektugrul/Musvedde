@@ -1,5 +1,6 @@
 package dev.aliarslan.musvedde.ui
 
+import androidx.annotation.Keep
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,6 +10,7 @@ data class NotesRoute(val section: NotesSection = NotesSection.ACTIVE, val label
     }
 }
 
+@Keep
 @Serializable
 enum class NotesSection { ACTIVE, ARCHIVED, TRASHED, LABEL }
 

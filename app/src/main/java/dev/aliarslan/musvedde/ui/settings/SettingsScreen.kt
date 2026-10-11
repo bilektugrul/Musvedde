@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.LocaleList
 import android.provider.Settings as AndroidSettings
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.annotation.RequiresApi
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -164,6 +165,7 @@ private fun AppearanceSection(s: Settings, update: ((Settings) -> Settings) -> U
 }
 
 @Composable
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private fun LanguageRow() {
     val context = LocalContext.current
     val localeManager = remember { context.getSystemService(LocaleManager::class.java) }
