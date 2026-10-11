@@ -21,6 +21,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val ZERO_WIDTH_SPACE = '​'
+
+/**
+ * The system collapses consecutive line breaks in a notification's big text, so blank lines get a
+ * zero-width space to keep the gaps between paragraphs.
+ */
+fun keepBlankLines(text: String): String =
+    text.trimEnd().lines().joinToString("\n") { line -> if (line.isBlank()) ZERO_WIDTH_SPACE.toString() else line }
+
 @Singleton
 class PinnedNoteNotifier @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -72,7 +81,7 @@ class PinnedNoteNotifier @Inject constructor(
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(note.body.lineSequence().firstOrNull { it.isNotBlank() && it != title })
-            .setStyle(NotificationCompat.BigTextStyle().bigText(note.body))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(keepBlankLines(note.body)))
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)

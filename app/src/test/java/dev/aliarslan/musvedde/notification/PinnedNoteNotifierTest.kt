@@ -136,4 +136,20 @@ class PinnedNoteNotifierTest {
         assertThat(posted()).isEmpty()
         assertThat(notes.get(id)!!.pinnedToNotification).isFalse()
     }
+
+    @Test
+    fun blankLinesSurviveInTheExpandedText() = runTest(dispatcher) {
+        val id = notes.create("", "X\n\nY\n\n\nZ\n")
+        notes.setPinnedToNotification(id, true)
+        advanceUntilIdle()
+
+        assertThat(posted().single().bigText()).isEqualTo("X\n​\nY\n​\n​\nZ")
+    }
+
+    @Test
+    fun keepBlankLinesLeavesOtherLinesAlone() {
+        assertThat(keepBlankLines("a\n  \nb")).isEqualTo("a\n​\nb")
+        assertThat(keepBlankLines("tek satır")).isEqualTo("tek satır")
+        assertThat(keepBlankLines("son\n\n")).isEqualTo("son")
+    }
 }
