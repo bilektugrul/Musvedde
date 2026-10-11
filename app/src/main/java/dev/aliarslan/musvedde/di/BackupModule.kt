@@ -12,8 +12,12 @@ import dagger.multibindings.IntoSet
 import dev.aliarslan.musvedde.data.backup.BackupManager
 import dev.aliarslan.musvedde.data.backup.BackupTarget
 import dev.aliarslan.musvedde.data.backup.FolderBackupTarget
+import dev.aliarslan.musvedde.data.backup.drive.DriveApi
+import dev.aliarslan.musvedde.data.backup.drive.DriveBackupTarget
+import okhttp3.OkHttpClient
 import java.io.File
 import javax.inject.Named
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -21,6 +25,10 @@ object BackupModule {
 
     @Provides
     fun workManager(@ApplicationContext context: Context): WorkManager = WorkManager.getInstance(context)
+
+    @Provides
+    @Singleton
+    fun driveApi(): DriveApi = DriveApi(OkHttpClient())
 
     @Provides
     @Named(BackupManager.CACHE_DIR)
@@ -33,4 +41,8 @@ interface BackupTargetsModule {
     @Binds
     @IntoSet
     fun folder(target: FolderBackupTarget): BackupTarget
+
+    @Binds
+    @IntoSet
+    fun drive(target: DriveBackupTarget): BackupTarget
 }

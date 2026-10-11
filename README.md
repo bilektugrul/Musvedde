@@ -26,6 +26,17 @@ Requirements: JDK 17+, Android SDK (compileSdk 37).
 
 Run the unit tests with `./gradlew :app:testDebugUnitTest`.
 
+## Google Drive backup (optional)
+
+Folder backups work out of the box. Drive backups store files in the app's hidden `appDataFolder` and need a Google Cloud OAuth client that matches **your** build's package name and signing key. No keys live in this repository.
+
+1. Create a project at <https://console.cloud.google.com/> and enable the **Google Drive API**.
+2. Configure the **OAuth consent screen** (External, testing mode is fine) and add your Google account as a test user. Add the scope `https://www.googleapis.com/auth/drive.appdata`.
+3. Create an **OAuth client ID** of type **Android** with package name `dev.aliarslan.musvedde` (or your fork's `applicationId`) and the SHA-1 of the key that signs your build. Get it with `./gradlew signingReport`.
+4. Install that build, open *Settings → Backup* and tap *Connect Google Drive*.
+
+If the client is missing or does not match, connecting fails and the reason is written to the in-app error log.
+
 ## License
 
 Müsvedde is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE). You are free to read, fork, modify and share it for any noncommercial purpose. Commercial use is not permitted.
