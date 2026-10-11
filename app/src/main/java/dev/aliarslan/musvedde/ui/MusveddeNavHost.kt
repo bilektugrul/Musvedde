@@ -23,6 +23,7 @@ import dev.aliarslan.musvedde.domain.Label
 import dev.aliarslan.musvedde.ui.editor.EditorScreen
 import dev.aliarslan.musvedde.ui.labels.EditLabelsDialog
 import dev.aliarslan.musvedde.ui.notes.NotesScreen
+import dev.aliarslan.musvedde.ui.settings.SettingsScreen
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -87,7 +88,12 @@ fun MusveddeNavHost(
             composable<EditorRoute> {
                 EditorScreen(onBack = { navController.popBackStack() })
             }
-            composable<SettingsRoute> { Placeholder("Settings") }
+            composable<SettingsRoute> {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onErrorLog = { navController.navigate(ErrorLogRoute) },
+                )
+            }
             composable<ErrorLogRoute> { Placeholder("Error log") }
         }
     }
