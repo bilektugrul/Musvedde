@@ -9,6 +9,7 @@ import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.note.NoteEventBus
+import dev.aliarslan.musvedde.data.note.OpenNoteTracker
 import dev.aliarslan.musvedde.data.note.NoteEvent
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.domain.NoteState
@@ -41,6 +42,7 @@ class EditorViewModelTest {
     private lateinit var notes: NoteRepository
     private lateinit var versions: VersionRepository
     private val noteEvents = NoteEventBus()
+    private val tracker = OpenNoteTracker()
     private val appScope = CoroutineScope(dispatcher + SupervisorJob())
 
     @Before
@@ -67,6 +69,7 @@ class EditorViewModelTest {
         appScope = appScope,
         clock = { 1L },
         noteEvents = noteEvents,
+        openNotes = tracker,
     )
 
     private suspend fun count() = db.noteDao().count()
@@ -215,5 +218,17 @@ class EditorViewModelTest {
         advanceUntilIdle()
 
         assertThat(count()).isEqualTo(0)
+    }
+
+    @Test
+    fun openNoteIsTrackedUntilFinished() = runTest(dispatcher) {
+        val id = notes.create("", "a")
+        val vm = viewModel(noteId = id)
+        advanceUntilIdle()
+        assertThat(tracker.openNotes.value).containsExactly(id)
+
+        vm.finish()
+        advanceUntilIdle()
+        assertThat(tracker.openNotes.value).isEmpty()
     }
 }

@@ -11,6 +11,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.OpenNoteTracker
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,7 @@ class PinnedNoteNotifierTest {
     private lateinit var db: MusveddeDatabase
     private lateinit var notes: NoteRepository
     private val settings = SettingsRepository(InMemoryPreferencesDataStore())
+    private val tracker = OpenNoteTracker()
     private lateinit var notifier: PinnedNoteNotifier
 
     @Before
@@ -44,7 +46,7 @@ class PinnedNoteNotifierTest {
         shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         db = inMemoryDatabase(dispatcher)
         notes = NoteRepository(db, clock = { 1L }, io = dispatcher)
-        notifier = PinnedNoteNotifier(context, notes, settings)
+        notifier = PinnedNoteNotifier(context, notes, settings, tracker)
         notifier.start(scope)
     }
 
@@ -168,4 +170,67 @@ class PinnedNoteNotifierTest {
         }
         .filter { it.isNotEmpty() }
         .joinToString("\n")
+
+    @Test
+    fun editingAnOpenNoteDefersTheUpdateUntilItCloses() = runTest(dispatcher) {
+        tracker.setForeground(true)
+        val id = notes.create("", "eski")
+        notes.setPinnedToNotification(id, true)
+        advanceUntilIdle()
+
+        tracker.open(id)
+        notes.updateContent(id, "", "yeni")
+        advanceUntilIdle()
+        assertThat(posted().single().bigText()).isEqualTo("eski")
+
+        tracker.close(id)
+        advanceUntilIdle()
+        assertThat(posted().single().bigText()).isEqualTo("yeni")
+    }
+
+    @Test
+    fun leavingTheAppPostsTheDeferredUpdate() = runTest(dispatcher) {
+        tracker.setForeground(true)
+        val id = notes.create("", "eski")
+        notes.setPinnedToNotification(id, true)
+        advanceUntilIdle()
+        tracker.open(id)
+        notes.updateContent(id, "", "yeni")
+        advanceUntilIdle()
+
+        tracker.setForeground(false)
+        advanceUntilIdle()
+
+        assertThat(posted().single().bigText()).isEqualTo("yeni")
+    }
+
+    @Test
+    fun pinningAnOpenNotePostsImmediately() = runTest(dispatcher) {
+        tracker.setForeground(true)
+        val id = notes.create("", "metin")
+        tracker.open(id)
+
+        notes.setPinnedToNotification(id, true)
+        advanceUntilIdle()
+
+        assertThat(posted().single().bigText()).isEqualTo("metin")
+    }
+
+    @Test
+    fun editingOneNoteLeavesOtherNotificationsAlone() = runTest(dispatcher) {
+        val edited = notes.create("", "a")
+        val other = notes.create("", "b")
+        notes.setPinnedToNotification(edited, true)
+        notes.setPinnedToNotification(other, true)
+        advanceUntilIdle()
+        val before = shadowOf(manager).getNotification(PinnedNoteNotifier.TAG, PinnedNoteNotifier.notificationId(other))
+
+        notes.updateContent(edited, "", "a2")
+        advanceUntilIdle()
+
+        val after = shadowOf(manager).getNotification(PinnedNoteNotifier.TAG, PinnedNoteNotifier.notificationId(other))
+        assertThat(after).isSameInstanceAs(before)
+        val editedNow = shadowOf(manager).getNotification(PinnedNoteNotifier.TAG, PinnedNoteNotifier.notificationId(edited))
+        assertThat(editedNow.bigText()).isEqualTo("a2")
+    }
 }

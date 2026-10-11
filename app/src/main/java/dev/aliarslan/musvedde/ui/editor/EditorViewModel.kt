@@ -13,6 +13,7 @@ import dev.aliarslan.musvedde.core.Clock
 import dev.aliarslan.musvedde.data.note.NoteEvent
 import dev.aliarslan.musvedde.data.note.NoteEventBus
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.OpenNoteTracker
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
@@ -65,6 +66,7 @@ class EditorViewModel @Inject constructor(
     @param:ApplicationScope private val appScope: CoroutineScope,
     private val clock: Clock,
     private val noteEvents: NoteEventBus,
+    private val openNotes: OpenNoteTracker,
 ) : ViewModel() {
 
     val title = TextFieldState()
@@ -100,6 +102,7 @@ class EditorViewModel @Inject constructor(
     private var sessionStarted = false
 
     init {
+        noteId?.let(openNotes::open)
         viewModelScope.launch {
             noteId?.let { id -> notes.get(id)?.let(::applyLoaded) }
             _uiState.update { it.copy(loaded = true) }
@@ -135,7 +138,10 @@ class EditorViewModel @Inject constructor(
         val id = idLock.withLock {
             noteId ?: run {
                 if (draft.title.isBlank() && draft.body.isBlank()) return
-                notes.create(draft.title, draft.body).also { noteId = it }
+                notes.create(draft.title, draft.body).also {
+                    noteId = it
+                    openNotes.open(it)
+                }
             }
         }
         if (!sessionStarted) {
@@ -159,7 +165,10 @@ class EditorViewModel @Inject constructor(
     }
 
     private suspend fun ensureNote(): Long = idLock.withLock {
-        noteId ?: notes.create(title.text.toString(), body.text.toString()).also { noteId = it }
+        noteId ?: notes.create(title.text.toString(), body.text.toString()).also {
+            noteId = it
+            openNotes.open(it)
+        }
     }
 
     fun flush() {
@@ -225,7 +234,13 @@ class EditorViewModel @Inject constructor(
         finished = true
         appScope.launch {
             saver.flush().join()
-            noteId?.let { id -> close(id) }
+            noteId?.let { id ->
+                try {
+                    close(id)
+                } finally {
+                    openNotes.close(id)
+                }
+            }
         }
     }
 

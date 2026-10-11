@@ -12,12 +12,15 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.aliarslan.musvedde.MainActivity
 import dev.aliarslan.musvedde.R
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.OpenNoteTracker
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.domain.Note
 import dev.aliarslan.musvedde.domain.NoteState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +29,7 @@ import javax.inject.Singleton
  * collapses whitespace and removes lines that end up empty. A braille blank is none of those, so a line
  * holding just that survives and is drawn as an empty line.
  */
-private const val BLANK_LINE_MARKER = '⠀'
+private const val BLANK_LINE_MARKER = '\u2800'
 
 fun keepBlankLines(text: String): String =
     text.trimEnd().lines().joinToString("\n") { line -> if (line.isBlank()) BLANK_LINE_MARKER.toString() else line }
@@ -36,18 +39,26 @@ class PinnedNoteNotifier @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val notes: NoteRepository,
     private val settings: SettingsRepository,
+    private val openNotes: OpenNoteTracker,
 ) {
     private val manager = NotificationManagerCompat.from(context)
+
+    private data class Shown(val title: String, val body: String)
+
+    private val shown = ConcurrentHashMap<Long, Shown>()
 
     fun start(scope: CoroutineScope) {
         ensureChannel()
         scope.launch {
-            notes.observePinnedToNotification().collect(::sync)
+            combine(notes.observePinnedToNotification(), openNotes.openNotes, openNotes.foreground) { pinned, open, foreground ->
+                pinned to if (foreground) open else emptySet()
+            }.collect { (pinned, deferred) -> sync(pinned, deferred) }
         }
     }
 
     suspend fun repostAll() {
-        sync(notes.observePinnedToNotification().first())
+        shown.clear()
+        sync(notes.observePinnedToNotification().first(), deferred = emptySet())
     }
 
     suspend fun handleDismissed(noteId: Long) {
@@ -62,15 +73,28 @@ class PinnedNoteNotifier @Inject constructor(
 
     suspend fun handleUnpin(noteId: Long) {
         notes.setPinnedToNotification(noteId, false)
+        shown.remove(noteId)
         manager.cancel(TAG, notificationId(noteId))
     }
 
-    private fun sync(pinned: List<Note>) {
+    /**
+     * Posts only notifications whose text changed. While the app is in front, a note open in the editor
+     * keeps its current notification; it is refreshed once the note closes or the app goes to the background.
+     */
+    private fun sync(pinned: List<Note>, deferred: Set<Long>) {
         val wanted = pinned.associateBy { notificationId(it.id) }
         manager.activeNotifications
             .filter { it.tag == TAG && it.id !in wanted }
             .forEach { manager.cancel(TAG, it.id) }
-        pinned.forEach(::post)
+        shown.keys.retainAll(pinned.map { it.id }.toSet())
+        pinned.forEach { note ->
+            val previous = shown[note.id]
+            when {
+                previous == Shown(note.title, note.body) -> Unit
+                previous != null && note.id in deferred -> Unit
+                else -> post(note)
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -95,6 +119,7 @@ class PinnedNoteNotifier @Inject constructor(
             .addAction(0, context.getString(R.string.notification_action_unpin), actionIntent(PinActionReceiver.ACTION_UNPIN, note.id))
             .build()
         manager.notify(TAG, notificationId(note.id), notification)
+        shown[note.id] = Shown(note.title, note.body)
     }
 
     private fun openIntent(noteId: Long): PendingIntent = PendingIntent.getActivity(
@@ -125,7 +150,7 @@ class PinnedNoteNotifier @Inject constructor(
 
     companion object {
         const val CHANNEL_ID = "pinned_notes"
-        private const val TAG = "pinned_note"
+        const val TAG = "pinned_note"
         private const val NOTIFICATION_ID_BASE = 10_000L
 
         fun notificationId(noteId: Long): Int = (NOTIFICATION_ID_BASE + noteId).toInt()
