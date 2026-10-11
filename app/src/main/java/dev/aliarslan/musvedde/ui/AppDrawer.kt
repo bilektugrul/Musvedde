@@ -8,7 +8,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.Archive
-import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Lightbulb
@@ -36,7 +35,6 @@ fun AppDrawer(
     onNotes: (NotesRoute) -> Unit,
     onEditLabels: () -> Unit,
     onSettings: () -> Unit,
-    onErrorLog: () -> Unit,
 ) {
     ModalDrawerSheet {
         androidx.compose.foundation.layout.Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -73,7 +71,6 @@ fun AppDrawer(
             }
             HorizontalDivider(Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
             DrawerItem(Icons.Outlined.Settings, stringResource(R.string.nav_settings), false, onSettings)
-            DrawerItem(Icons.Outlined.BugReport, stringResource(R.string.nav_error_log), false, onErrorLog)
             Spacer(Modifier.height(16.dp))
         }
     }

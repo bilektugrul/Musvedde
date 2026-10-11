@@ -80,7 +80,6 @@ fun MusveddeNavHost(
                 },
                 onEditLabels = { closeDrawerThen { showEditLabels = true } },
                 onSettings = { closeDrawerThen { navController.navigate(SettingsRoute) } },
-                onErrorLog = { closeDrawerThen { navController.navigate(ErrorLogRoute) } },
             )
         },
     ) {
