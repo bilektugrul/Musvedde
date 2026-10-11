@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -91,6 +92,11 @@ fun MusveddeNavHost(
             exitTransition = { slideOutHorizontally(tween(duration)) { -it / 4 } + fadeOut(tween(duration), targetAlpha = 0.6f) },
             popEnterTransition = { slideInHorizontally(tween(duration)) { -it / 4 } + fadeIn(tween(duration), initialAlpha = 0.6f) },
             popExitTransition = { slideOutHorizontally(tween(duration)) { it } },
+            predictivePopEnterTransition = {
+                slideInHorizontally(tween(duration, easing = LinearEasing)) { -it / 4 } +
+                    fadeIn(tween(duration, easing = LinearEasing), initialAlpha = 0.6f)
+            },
+            predictivePopExitTransition = { slideOutHorizontally(tween(duration, easing = LinearEasing)) { it } },
         ) {
             composable<NotesRoute> {
                 NotesScreen(
