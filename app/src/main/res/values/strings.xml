@@ -180,4 +180,9 @@
     <string name="level_info">Info</string>
     <string name="day_today">Today</string>
     <string name="day_yesterday">Yesterday</string>
+    <string name="settings_animation_speed">Animation speed</string>
+    <string name="speed_slow">Slow</string>
+    <string name="speed_normal">Normal</string>
+    <string name="speed_fast">Fast</string>
+    <string name="settings_reduce_motion_summary">Turn off page and list animations</string>
 </resources>

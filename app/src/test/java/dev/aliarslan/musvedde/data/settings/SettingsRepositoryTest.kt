@@ -1,6 +1,7 @@
 package dev.aliarslan.musvedde.data.settings
 
 import com.google.common.truth.Truth.assertThat
+import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.Settings
@@ -26,6 +27,7 @@ class SettingsRepositoryTest {
         assertThat(settings.restoreDismissedPins).isTrue()
         assertThat(settings.backupFrequency).isEqualTo(BackupFrequency.OFF)
         assertThat(settings.backupRetention).isEqualTo(10)
+        assertThat(settings.animationSpeed).isEqualTo(AnimationSpeed.NORMAL)
     }
 
     @Test
@@ -39,6 +41,7 @@ class SettingsRepositoryTest {
                 backupFrequency = BackupFrequency.WEEKLY,
                 lastFolderBackupAt = 123L,
                 lastDriveBackupError = "boom",
+                animationSpeed = AnimationSpeed.SLOW,
             )
         }
         repository.update { it.copy(lastDriveBackupError = null) }
@@ -49,6 +52,7 @@ class SettingsRepositoryTest {
         assertThat(settings.backupFrequency).isEqualTo(BackupFrequency.WEEKLY)
         assertThat(settings.lastFolderBackupAt).isEqualTo(123L)
         assertThat(settings.lastDriveBackupError).isNull()
+        assertThat(settings.animationSpeed).isEqualTo(AnimationSpeed.SLOW)
     }
 
     @Test

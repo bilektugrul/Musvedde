@@ -124,7 +124,7 @@ fun MusveddeTheme(settings: Settings, content: @Composable () -> Unit) {
             dark = dark,
             amoled = settings.themeMode == ThemeMode.AMOLED,
             highContrast = settings.highContrast,
-            reduceMotion = settings.reduceMotion,
+            animationScale = appearanceScale(settings.animationSpeed, settings.reduceMotion),
         )
     }
 

@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.EditorFont
@@ -44,6 +45,7 @@ class SettingsRepository @Inject constructor(
         val pinchZoom = booleanPreferencesKey("pinchZoom")
         val previewSize = stringPreferencesKey("previewSize")
         val reduceMotion = booleanPreferencesKey("reduceMotion")
+        val animationSpeed = stringPreferencesKey("animationSpeed")
         val highContrast = booleanPreferencesKey("highContrast")
         val alwaysFocusMode = booleanPreferencesKey("alwaysFocusMode")
         val restoreDismissedPins = booleanPreferencesKey("restoreDismissedPins")
@@ -72,6 +74,7 @@ class SettingsRepository @Inject constructor(
             pinchZoom = this[Keys.pinchZoom] ?: d.pinchZoom,
             previewSize = enumOr(this[Keys.previewSize], d.previewSize),
             reduceMotion = this[Keys.reduceMotion] ?: d.reduceMotion,
+            animationSpeed = enumOr(this[Keys.animationSpeed], d.animationSpeed),
             highContrast = this[Keys.highContrast] ?: d.highContrast,
             alwaysFocusMode = this[Keys.alwaysFocusMode] ?: d.alwaysFocusMode,
             restoreDismissedPins = this[Keys.restoreDismissedPins] ?: d.restoreDismissedPins,
@@ -99,6 +102,7 @@ class SettingsRepository @Inject constructor(
         this[Keys.pinchZoom] = s.pinchZoom
         this[Keys.previewSize] = s.previewSize.name
         this[Keys.reduceMotion] = s.reduceMotion
+        this[Keys.animationSpeed] = s.animationSpeed.name
         this[Keys.highContrast] = s.highContrast
         this[Keys.alwaysFocusMode] = s.alwaysFocusMode
         this[Keys.restoreDismissedPins] = s.restoreDismissedPins

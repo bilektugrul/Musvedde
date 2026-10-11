@@ -179,4 +179,9 @@
     <string name="level_info">Bilgi</string>
     <string name="day_today">Bugün</string>
     <string name="day_yesterday">Dün</string>
+    <string name="settings_animation_speed">Animasyon hızı</string>
+    <string name="speed_slow">Yavaş</string>
+    <string name="speed_normal">Normal</string>
+    <string name="speed_fast">Hızlı</string>
+    <string name="settings_reduce_motion_summary">Sayfa ve liste animasyonlarını kapat</string>
 </resources>

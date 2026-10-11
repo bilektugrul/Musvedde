@@ -11,6 +11,11 @@ import androidx.compose.ui.platform.LocalContext
 import dev.aliarslan.musvedde.notification.rememberNotificationPermissionRequester
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -121,6 +126,8 @@ fun EditorScreen(
     BackHandler(enabled = focusMode) { focusMode = false }
 
     val appearance = LocalAppearance.current
+    val barEnter = fadeIn(tween(appearance.motionMillis(220))) + expandVertically(tween(appearance.motionMillis(260)))
+    val barExit = fadeOut(tween(appearance.motionMillis(180))) + shrinkVertically(tween(appearance.motionMillis(240)))
     val noteColor = noteContainerColor(state.color, appearance.dark, appearance.amoled)
     val background = if (noteColor == Color.Unspecified) MaterialTheme.colorScheme.background else noteColor
 
@@ -128,7 +135,7 @@ fun EditorScreen(
         containerColor = background,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            AnimatedVisibility(visible = !focusMode) {
+            AnimatedVisibility(visible = !focusMode, enter = barEnter, exit = barExit) {
                 EditorTopBar(
                     state = state,
                     background = background,
@@ -146,7 +153,7 @@ fun EditorScreen(
             }
         },
         bottomBar = {
-            AnimatedVisibility(visible = !focusMode) {
+            AnimatedVisibility(visible = !focusMode, enter = barEnter, exit = barExit) {
                 EditorBottomBar(
                     background = background,
                     title = viewModel.title,

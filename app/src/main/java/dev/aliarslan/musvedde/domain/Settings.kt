@@ -12,6 +12,8 @@ enum class PreviewSize(val maxLines: Int) { SMALL(6), MEDIUM(10), LARGE(14) }
 
 enum class BackupFrequency { OFF, DAILY, WEEKLY, MONTHLY }
 
+enum class AnimationSpeed(val factor: Float) { SLOW(1.8f), NORMAL(1.35f), FAST(1.0f) }
+
 data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
@@ -24,6 +26,7 @@ data class Settings(
     val pinchZoom: Boolean = true,
     val previewSize: PreviewSize = PreviewSize.MEDIUM,
     val reduceMotion: Boolean = false,
+    val animationSpeed: AnimationSpeed = AnimationSpeed.NORMAL,
     val highContrast: Boolean = false,
     val alwaysFocusMode: Boolean = false,
     val restoreDismissedPins: Boolean = true,

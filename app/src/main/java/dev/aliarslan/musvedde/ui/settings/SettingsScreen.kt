@@ -45,6 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aliarslan.musvedde.BuildConfig
 import dev.aliarslan.musvedde.R
+import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.EditorFont
@@ -256,7 +257,24 @@ private fun AccessibilitySection(s: Settings, update: ((Settings) -> Settings) -
         },
         onSelect = { size -> update { it.copy(previewSize = size) } },
     )
-    SwitchRow(stringResource(R.string.settings_reduce_motion), s.reduceMotion) { v -> update { it.copy(reduceMotion = v) } }
+    ChoiceRow(
+        title = stringResource(R.string.settings_animation_speed),
+        options = AnimationSpeed.entries,
+        selected = s.animationSpeed,
+        label = {
+            stringResource(
+                when (it) {
+                    AnimationSpeed.SLOW -> R.string.speed_slow
+                    AnimationSpeed.NORMAL -> R.string.speed_normal
+                    AnimationSpeed.FAST -> R.string.speed_fast
+                },
+            )
+        },
+        onSelect = { speed -> update { it.copy(animationSpeed = speed) } },
+    )
+    SwitchRow(stringResource(R.string.settings_reduce_motion), s.reduceMotion, stringResource(R.string.settings_reduce_motion_summary)) { v ->
+        update { it.copy(reduceMotion = v) }
+    }
     SwitchRow(stringResource(R.string.settings_high_contrast), s.highContrast, stringResource(R.string.settings_high_contrast_summary)) { v ->
         update { it.copy(highContrast = v) }
     }

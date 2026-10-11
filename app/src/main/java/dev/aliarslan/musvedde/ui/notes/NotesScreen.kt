@@ -54,6 +54,8 @@ import dev.aliarslan.musvedde.domain.NoteSummary
 import dev.aliarslan.musvedde.ui.NotesSection
 import dev.aliarslan.musvedde.ui.editor.ColorPickerSheet
 import dev.aliarslan.musvedde.ui.editor.LabelPickerSheet
+import androidx.compose.animation.core.tween
+import dev.aliarslan.musvedde.ui.theme.Appearance
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -222,7 +224,7 @@ private fun NotesGrid(
         val index = list.indexOfFirst { it.id == id }
         if (index >= 0) onMove(id, list.getOrNull(index - 1)?.id, list.getOrNull(index + 1)?.id)
     }
-    val reduceMotion = LocalAppearance.current.reduceMotion
+    val appearance = LocalAppearance.current
 
     LazyVerticalStaggeredGrid(
         columns = if (state.layout == ListLayout.GRID) StaggeredGridCells.Adaptive(160.dp) else StaggeredGridCells.Fixed(1),
@@ -240,11 +242,11 @@ private fun NotesGrid(
         if (pinned.isNotEmpty()) {
             header("pinned_header", R.string.header_pinned)
         }
-        noteItems(pinned, state, labelNames, reorderState, reduceMotion, onOpen, onSelect, onDragStart, persistMove)
+        noteItems(pinned, state, labelNames, reorderState, appearance, onOpen, onSelect, onDragStart, persistMove)
         if (pinned.isNotEmpty() && others.isNotEmpty()) {
             header("others_header", R.string.header_others)
         }
-        noteItems(others, state, labelNames, reorderState, reduceMotion, onOpen, onSelect, onDragStart, persistMove)
+        noteItems(others, state, labelNames, reorderState, appearance, onOpen, onSelect, onDragStart, persistMove)
     }
 }
 
@@ -254,7 +256,7 @@ private fun LazyStaggeredGridScope.noteItems(
     state: NotesUiState,
     labelNames: ImmutableMap<Long, String>,
     reorderState: sh.calvin.reorderable.ReorderableLazyStaggeredGridState,
-    reduceMotion: Boolean,
+    appearance: Appearance,
     onOpen: (Long) -> Unit,
     onSelect: (Long) -> Unit,
     onDragStart: (Long) -> Unit,
@@ -265,7 +267,15 @@ private fun LazyStaggeredGridScope.noteItems(
             reorderState,
             key = note.id,
             enabled = state.canReorder,
-            animateItemModifier = if (reduceMotion) Modifier else Modifier.animateItem(),
+            animateItemModifier = if (appearance.reduceMotion) {
+                Modifier
+            } else {
+                Modifier.animateItem(
+                    fadeInSpec = tween(appearance.motionMillis(220)),
+                    placementSpec = tween(appearance.motionMillis(300)),
+                    fadeOutSpec = tween(appearance.motionMillis(220)),
+                )
+            },
         ) { _ ->
             val dragModifier = if (state.canReorder) {
                 Modifier.longPressDraggableHandle(
