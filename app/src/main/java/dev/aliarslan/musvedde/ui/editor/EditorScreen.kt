@@ -1,6 +1,15 @@
 package dev.aliarslan.musvedde.ui.editor
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import dev.aliarslan.musvedde.notification.rememberNotificationPermissionRequester
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -69,7 +78,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aliarslan.musvedde.R
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.NoteState
-import dev.aliarslan.musvedde.domain.Settings
+import dev.aliarslan.musvedde.domain.Settings as AppSettings
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 import dev.aliarslan.musvedde.ui.theme.fontFamily
 import dev.aliarslan.musvedde.ui.theme.noteContainerColor
@@ -77,9 +86,22 @@ import dev.aliarslan.musvedde.ui.theme.noteContainerColor
 @Composable
 fun EditorScreen(
     onBack: () -> Unit,
-    requestNotificationPermission: (onGranted: () -> Unit) -> Unit,
     viewModel: EditorViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val deniedMessage = stringResource(R.string.notification_permission_denied)
+    val settingsAction = stringResource(R.string.action_open_settings)
+    val requestNotificationPermission = rememberNotificationPermissionRequester(onDenied = {
+        scope.launch {
+            if (snackbar.showSnackbar(deniedMessage, settingsAction, withDismissAction = true) == SnackbarResult.ActionPerformed) {
+                context.startActivity(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                )
+            }
+        }
+    })
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by viewModel.editorSettings.collectAsStateWithLifecycle()
     val labels by viewModel.allLabels.collectAsStateWithLifecycle()
@@ -103,6 +125,7 @@ fun EditorScreen(
 
     Scaffold(
         containerColor = background,
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             AnimatedVisibility(visible = !focusMode) {
                 EditorTopBar(
@@ -278,7 +301,7 @@ private fun EditorBottomBar(
 private fun EditorFields(
     title: TextFieldState,
     body: TextFieldState,
-    settings: Settings,
+    settings: AppSettings,
     focusMode: Boolean,
     onFontSizeCommitted: (Float) -> Unit,
 ) {
@@ -308,7 +331,7 @@ private fun EditorFields(
                         val zoom = event.calculateZoom()
                         if (zoom != 1f) {
                             zoomed = true
-                            fontSize = (fontSize * zoom).coerceIn(Settings.EDITOR_FONT_SIZE_RANGE)
+                            fontSize = (fontSize * zoom).coerceIn(AppSettings.EDITOR_FONT_SIZE_RANGE)
                             event.changes.forEach { it.consume() }
                         }
                     }

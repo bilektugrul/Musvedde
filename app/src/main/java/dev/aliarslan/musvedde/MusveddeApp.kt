@@ -14,6 +14,7 @@ import dev.aliarslan.musvedde.data.note.TrashPurgeWorker
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.di.CoreModule
+import dev.aliarslan.musvedde.notification.PinnedNoteNotifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -41,10 +42,14 @@ class MusveddeApp : Application(), Configuration.Provider {
     @Inject
     lateinit var workManager: Lazy<WorkManager>
 
+    @Inject
+    lateinit var pinnedNoteNotifier: PinnedNoteNotifier
+
     override fun onCreate() {
         CrashRecorder(CoreModule.pendingCrashFile(this), Clock.System).install()
         super.onCreate()
         appScope.launch { errorLog.importPendingCrash() }
+        pinnedNoteNotifier.start(appScope)
         TrashPurgeWorker.schedule(workManager.get())
         appScope.launch {
             val current = settings.settings.first()

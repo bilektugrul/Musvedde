@@ -20,7 +20,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dev.aliarslan.musvedde.domain.Label
-import dev.aliarslan.musvedde.notification.rememberNotificationPermissionRequester
 import dev.aliarslan.musvedde.ui.editor.EditorScreen
 import dev.aliarslan.musvedde.ui.labels.EditLabelsDialog
 import dev.aliarslan.musvedde.ui.notes.NotesScreen
@@ -38,7 +37,6 @@ fun MusveddeNavHost(
     navController: NavHostController = rememberNavController(),
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val requestNotificationPermission = rememberNotificationPermissionRequester(onDenied = {})
     val scope = rememberCoroutineScope()
     var showEditLabels by rememberSaveable { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -87,10 +85,7 @@ fun MusveddeNavHost(
                 )
             }
             composable<EditorRoute> {
-                EditorScreen(
-                    onBack = { navController.popBackStack() },
-                    requestNotificationPermission = requestNotificationPermission,
-                )
+                EditorScreen(onBack = { navController.popBackStack() })
             }
             composable<SettingsRoute> { Placeholder("Settings") }
             composable<ErrorLogRoute> { Placeholder("Error log") }

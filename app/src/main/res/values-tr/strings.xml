@@ -82,4 +82,9 @@
         <item quantity="one">Not geri yüklendi</item>
         <item quantity="other">%d not geri yüklendi</item>
     </plurals>
+    <string name="notification_channel_pinned">Sabitlenmiş notlar</string>
+    <string name="notification_channel_pinned_description">Bildirim alanına sabitlediğin notlar</string>
+    <string name="notification_untitled">Not</string>
+    <string name="notification_action_open">Aç</string>
+    <string name="notification_action_unpin">Kaldır</string>
 </resources>
