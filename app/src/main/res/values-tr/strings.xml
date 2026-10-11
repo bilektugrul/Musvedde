@@ -199,4 +199,16 @@
     <string name="drive_setup_copy">%1$s kopyala</string>
     <string name="font_system">Sistem yazı tipi</string>
     <string name="font_google_sans">Google Sans</string>
+    <string name="action_more">Diğer seçenekler</string>
+    <string name="editor_edited">Düzenlendi: %1$s</string>
+    <string name="history_title">Sürüm geçmişi</string>
+    <string name="history_empty">Henüz sürüm yok. Notu düzenleyip her kapattığında bir sürüm kaydedilir.</string>
+    <string name="history_clear">Geçmişi temizle</string>
+    <string name="history_clear_confirm">Bu notun tüm sürümleri silinsin mi? Notun kendisi kalır.</string>
+    <string name="history_delete">Sil</string>
+    <string name="history_delete_confirm">Bu sürüm silinsin mi?</string>
+    <string name="history_restore">Geri yükle</string>
+    <string name="history_show_changes">Önceki sürüme göre değişiklikleri göster</string>
+    <string name="history_change">+%1$d / −%2$d satır</string>
+    <string name="history_first">İlk sürüm</string>
 </resources>

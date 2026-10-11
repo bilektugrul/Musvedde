@@ -9,7 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.aliarslan.musvedde.data.note.LabelRepository
+import dev.aliarslan.musvedde.core.Clock
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.domain.Label
@@ -55,9 +57,11 @@ sealed interface EditorEvent {
 class EditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val notes: NoteRepository,
+    private val versions: VersionRepository,
     private val labels: LabelRepository,
     private val settings: SettingsRepository,
     @param:ApplicationScope private val appScope: CoroutineScope,
+    private val clock: Clock,
 ) : ViewModel() {
 
     val title = TextFieldState()
@@ -86,6 +90,12 @@ class EditorViewModel @Inject constructor(
 
     private var finished = false
 
+    private var baseline = Draft("", "")
+    private var baselineAt = clock.now()
+
+    @Volatile
+    private var sessionStarted = false
+
     init {
         viewModelScope.launch {
             noteId?.let { id -> notes.get(id)?.let(::applyLoaded) }
@@ -98,6 +108,10 @@ class EditorViewModel @Inject constructor(
 
     @OptIn(ExperimentalFoundationApi::class)
     private fun applyLoaded(note: Note) {
+        if (!sessionStarted) {
+            baseline = Draft(note.title, note.body)
+            baselineAt = note.updatedAt
+        }
         title.setTextAndPlaceCursorAtEnd(note.title)
         body.setTextAndPlaceCursorAtEnd(note.body)
         body.undoState.clearHistory()
@@ -121,7 +135,24 @@ class EditorViewModel @Inject constructor(
                 notes.create(draft.title, draft.body).also { noteId = it }
             }
         }
+        if (!sessionStarted) {
+            sessionStarted = true
+            versions.beginSession(id, baseline.title, baseline.body, baselineAt)
+        }
         notes.updateContent(id, draft.title, draft.body)
+        _uiState.update { it.copy(updatedAt = clock.now()) }
+    }
+
+    fun currentNoteId(): Long? = noteId
+
+    fun reloadIfChanged() {
+        val id = noteId ?: return
+        if (!_uiState.value.loaded) return
+        viewModelScope.launch {
+            saver.flush().join()
+            val note = notes.get(id) ?: return@launch
+            if (note.title != title.text.toString() || note.body != body.text.toString()) applyLoaded(note)
+        }
     }
 
     private suspend fun ensureNote(): Long = idLock.withLock {
@@ -191,7 +222,10 @@ class EditorViewModel @Inject constructor(
         finished = true
         appScope.launch {
             saver.flush().join()
-            noteId?.let { notes.deleteIfBlank(it) }
+            noteId?.let { id ->
+                notes.deleteIfBlank(id)
+                if (sessionStarted) versions.endSession(id)
+            }
         }
     }
 

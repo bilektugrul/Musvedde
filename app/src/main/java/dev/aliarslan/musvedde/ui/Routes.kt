@@ -22,6 +22,9 @@ data class EditorRoute(val noteId: Long = NEW_NOTE) {
 }
 
 @Serializable
+data class HistoryRoute(val noteId: Long)
+
+@Serializable
 data object SettingsRoute
 
 @Serializable

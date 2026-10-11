@@ -11,6 +11,7 @@ import dev.aliarslan.musvedde.data.errorlog.CrashRecorder
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.errorlog.ErrorLogRepository
 import dev.aliarslan.musvedde.data.note.TrashPurgeWorker
+import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.di.CoreModule
@@ -45,10 +46,14 @@ class MusveddeApp : Application(), Configuration.Provider {
     @Inject
     lateinit var pinnedNoteNotifier: PinnedNoteNotifier
 
+    @Inject
+    lateinit var versions: VersionRepository
+
     override fun onCreate() {
         CrashRecorder(CoreModule.pendingCrashFile(this), Clock.System).install()
         super.onCreate()
         appScope.launch { errorLog.importPendingCrash() }
+        appScope.launch { versions.recoverPending() }
         pinnedNoteNotifier.start(appScope)
         TrashPurgeWorker.schedule(workManager.get())
         appScope.launch {

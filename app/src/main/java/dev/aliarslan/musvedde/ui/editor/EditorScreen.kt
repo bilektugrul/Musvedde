@@ -1,6 +1,14 @@
 package dev.aliarslan.musvedde.ui.editor
 
 import android.content.Intent
+import android.text.format.DateUtils
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.SnackbarHost
@@ -109,8 +117,13 @@ import dev.aliarslan.musvedde.ui.theme.noteContainerColor
 @Composable
 fun EditorScreen(
     onBack: () -> Unit,
+    onOpenHistory: (Long) -> Unit,
     viewModel: EditorViewModel = hiltViewModel(),
 ) {
+    val openHistory: () -> Unit = {
+        viewModel.flush()
+        viewModel.currentNoteId()?.let(onOpenHistory)
+    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -130,6 +143,7 @@ fun EditorScreen(
     val labels by viewModel.allLabels.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.reloadIfChanged() }
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { if (it == EditorEvent.Close) onBack() }
     }
@@ -166,6 +180,7 @@ fun EditorScreen(
                         }
                     },
                     onArchive = viewModel::archive,
+                    onOpenHistory = openHistory,
                 )
             }
         },
@@ -196,6 +211,8 @@ fun EditorScreen(
                     settings = settings,
                     focusMode = focusMode,
                     autoFocusBody = viewModel.isNewNote,
+                    updatedAt = state.updatedAt,
+                    onOpenHistory = openHistory,
                     onFontSizeCommitted = viewModel::setFontSize,
                 )
             }
@@ -243,7 +260,9 @@ private fun EditorTopBar(
     onTogglePin: () -> Unit,
     onToggleNotification: () -> Unit,
     onArchive: () -> Unit,
+    onOpenHistory: () -> Unit,
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
     TopAppBar(
         title = {},
         colors = TopAppBarDefaults.topAppBarColors(containerColor = background),
@@ -275,6 +294,21 @@ private fun EditorTopBar(
                     Icon(
                         if (archived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
                         contentDescription = stringResource(if (archived) R.string.action_unarchive else R.string.action_archive),
+                    )
+                }
+            }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.history_title)) },
+                        leadingIcon = { Icon(Icons.Outlined.History, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onOpenHistory()
+                        },
                     )
                 }
             }
@@ -330,6 +364,8 @@ private fun EditorFields(
     settings: AppSettings,
     focusMode: Boolean,
     autoFocusBody: Boolean,
+    updatedAt: Long?,
+    onOpenHistory: () -> Unit,
     onFontSizeCommitted: (Float) -> Unit,
 ) {
     val onSurface = MaterialTheme.colorScheme.onSurface
@@ -456,12 +492,14 @@ private fun EditorFields(
                 hint,
                 singleLine = false,
                 modifier = Modifier
-                    .padding(top = 12.dp, bottom = 120.dp)
+                    .padding(top = 12.dp, bottom = 24.dp)
                     .testTag("editor_body")
                     .focusRequester(bodyFocus)
                     .onGloballyPositioned { bodyBounds = it.boundsInRoot() },
                 onTextLayout = { bodyLayout[0] = it },
             )
+            if (updatedAt != null) EditedFooter(updatedAt, onOpenHistory)
+            Spacer(Modifier.height(96.dp))
         }
     }
 }
@@ -489,5 +527,26 @@ private fun HintedField(
                 inner()
             }
         },
+    )
+}
+
+@Composable
+private fun EditedFooter(updatedAt: Long, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val time = remember(updatedAt) {
+        val flags = if (DateUtils.isToday(updatedAt)) {
+            DateUtils.FORMAT_SHOW_TIME
+        } else {
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH
+        }
+        DateUtils.formatDateTime(context, updatedAt, flags)
+    }
+    Text(
+        stringResource(R.string.editor_edited, time),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
     )
 }

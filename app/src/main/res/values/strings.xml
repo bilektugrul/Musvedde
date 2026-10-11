@@ -200,4 +200,16 @@
     <string name="drive_setup_copy">Copy %1$s</string>
     <string name="font_system">System font</string>
     <string name="font_google_sans">Google Sans</string>
+    <string name="action_more">More options</string>
+    <string name="editor_edited">Edited %1$s</string>
+    <string name="history_title">Version history</string>
+    <string name="history_empty">No versions yet. A version is saved each time you close the note after editing it.</string>
+    <string name="history_clear">Clear history</string>
+    <string name="history_clear_confirm">Delete all versions of this note? The note itself stays.</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_delete_confirm">Delete this version?</string>
+    <string name="history_restore">Restore</string>
+    <string name="history_show_changes">Show changes from the previous version</string>
+    <string name="history_change">+%1$d / −%2$d lines</string>
+    <string name="history_first">First version</string>
 </resources>

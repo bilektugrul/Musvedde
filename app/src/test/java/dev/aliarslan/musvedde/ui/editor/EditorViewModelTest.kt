@@ -8,6 +8,8 @@ import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.VersionRepository
+import kotlinx.coroutines.flow.first
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +35,7 @@ class EditorViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private lateinit var db: MusveddeDatabase
     private lateinit var notes: NoteRepository
+    private lateinit var versions: VersionRepository
     private val appScope = CoroutineScope(dispatcher + SupervisorJob())
 
     @Before
@@ -40,6 +43,7 @@ class EditorViewModelTest {
         Dispatchers.setMain(dispatcher)
         db = inMemoryDatabase(dispatcher)
         notes = NoteRepository(db, clock = { 1L }, io = dispatcher)
+        versions = VersionRepository(db, clock = { 2L }, io = dispatcher)
     }
 
     @After
@@ -52,9 +56,11 @@ class EditorViewModelTest {
     private fun viewModel(noteId: Long) = EditorViewModel(
         savedStateHandle = SavedStateHandle(mapOf("noteId" to noteId)),
         notes = notes,
+        versions = versions,
         labels = LabelRepository(db.labelDao(), dispatcher),
         settings = SettingsRepository(InMemoryPreferencesDataStore()),
         appScope = appScope,
+        clock = { 1L },
     )
 
     private suspend fun count() = db.noteDao().count()
@@ -125,5 +131,45 @@ class EditorViewModelTest {
         advanceUntilIdle()
 
         assertThat(notes.get(id)!!.body).isEqualTo("ab")
+    }
+
+    @Test
+    fun closingAfterEditingStoresAVersion() = runTest(dispatcher) {
+        val id = notes.create("", "eski")
+        val vm = viewModel(noteId = id)
+        advanceUntilIdle()
+
+        vm.body.setTextAndPlaceCursorAtEnd("yeni")
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+        vm.finish()
+        advanceUntilIdle()
+
+        assertThat(versions.observe(id).first().map { it.body }).containsExactly("yeni", "eski").inOrder()
+    }
+
+    @Test
+    fun openingAndClosingWithoutEditsStoresNothing() = runTest(dispatcher) {
+        val id = notes.create("", "aynı")
+        val vm = viewModel(noteId = id)
+        advanceUntilIdle()
+
+        vm.finish()
+        advanceUntilIdle()
+
+        assertThat(versions.observe(id).first()).isEmpty()
+    }
+
+    @Test
+    fun reloadPicksUpRestoredContent() = runTest(dispatcher) {
+        val id = notes.create("", "a")
+        val vm = viewModel(noteId = id)
+        advanceUntilIdle()
+
+        notes.updateContent(id, "", "geri yüklendi")
+        vm.reloadIfChanged()
+        advanceUntilIdle()
+
+        assertThat(vm.body.text.toString()).isEqualTo("geri yüklendi")
     }
 }
