@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
@@ -19,6 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -58,13 +60,20 @@ class PinnedNoteNotifierTest {
 
     private fun posted(): List<Notification> = shadowOf(manager).allNotifications
 
+    private fun TestScope.settle() {
+        repeat(SETTLE_ROUNDS) {
+            advanceUntilIdle()
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+    }
+
     private fun Notification.bigText() = extras.getCharSequence(NotificationCompat.EXTRA_BIG_TEXT)?.toString()
 
     @Test
     fun postsNotificationForPinnedNote() = runTest(dispatcher) {
         val id = notes.create("Gece", "ilk satır\nikinci satır")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         val notification = posted().single()
         assertThat(notification.extras.getCharSequence(NotificationCompat.EXTRA_TITLE).toString()).isEqualTo("Gece")
@@ -77,10 +86,10 @@ class PinnedNoteNotifierTest {
     fun editUpdatesSameNotificationId() = runTest(dispatcher) {
         val id = notes.create("", "eski")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         notes.updateContent(id, "", "yeni")
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted()).hasSize(1)
         assertThat(posted().single().bigText()).isEqualTo("yeni")
@@ -90,10 +99,10 @@ class PinnedNoteNotifierTest {
     fun unpinCancels() = runTest(dispatcher) {
         val id = notes.create("", "satır")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         notes.setPinnedToNotification(id, false)
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted()).isEmpty()
     }
@@ -102,10 +111,10 @@ class PinnedNoteNotifierTest {
     fun trashingCancels() = runTest(dispatcher) {
         val id = notes.create("", "satır")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         notes.trash(listOf(id))
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted()).isEmpty()
     }
@@ -114,11 +123,11 @@ class PinnedNoteNotifierTest {
     fun dismissWithRestoreOnReposts() = runTest(dispatcher) {
         val id = notes.create("", "satır")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
         manager.cancelAll()
 
         notifier.handleDismissed(id)
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted()).hasSize(1)
         assertThat(notes.get(id)!!.pinnedToNotification).isTrue()
@@ -129,11 +138,11 @@ class PinnedNoteNotifierTest {
         settings.update { it.copy(restoreDismissedPins = false) }
         val id = notes.create("", "satır")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
         manager.cancelAll()
 
         notifier.handleDismissed(id)
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted()).isEmpty()
         assertThat(notes.get(id)!!.pinnedToNotification).isFalse()
@@ -143,7 +152,7 @@ class PinnedNoteNotifierTest {
     fun blankLinesSurviveTheSystemNormalizer() = runTest(dispatcher) {
         val id = notes.create("", "X\n\nY\n\n\nZ\n")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         val shown = systemNormalized(posted().single().bigText()!!)
         assertThat(shown.lines().map { it.isBlankLooking() }).containsExactly(false, true, false, true, true, false).inOrder()
@@ -176,15 +185,15 @@ class PinnedNoteNotifierTest {
         tracker.setForeground(true)
         val id = notes.create("", "eski")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         tracker.open(id)
         notes.updateContent(id, "", "yeni")
-        advanceUntilIdle()
+        settle()
         assertThat(posted().single().bigText()).isEqualTo("eski")
 
         tracker.close(id)
-        advanceUntilIdle()
+        settle()
         assertThat(posted().single().bigText()).isEqualTo("yeni")
     }
 
@@ -193,13 +202,13 @@ class PinnedNoteNotifierTest {
         tracker.setForeground(true)
         val id = notes.create("", "eski")
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
         tracker.open(id)
         notes.updateContent(id, "", "yeni")
-        advanceUntilIdle()
+        settle()
 
         tracker.setForeground(false)
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted().single().bigText()).isEqualTo("yeni")
     }
@@ -211,7 +220,7 @@ class PinnedNoteNotifierTest {
         tracker.open(id)
 
         notes.setPinnedToNotification(id, true)
-        advanceUntilIdle()
+        settle()
 
         assertThat(posted().single().bigText()).isEqualTo("metin")
     }
@@ -222,15 +231,19 @@ class PinnedNoteNotifierTest {
         val other = notes.create("", "b")
         notes.setPinnedToNotification(edited, true)
         notes.setPinnedToNotification(other, true)
-        advanceUntilIdle()
+        settle()
         val before = shadowOf(manager).getNotification(PinnedNoteNotifier.TAG, PinnedNoteNotifier.notificationId(other))
 
         notes.updateContent(edited, "", "a2")
-        advanceUntilIdle()
+        settle()
 
         val after = shadowOf(manager).getNotification(PinnedNoteNotifier.TAG, PinnedNoteNotifier.notificationId(other))
         assertThat(after).isSameInstanceAs(before)
         val editedNow = shadowOf(manager).getNotification(PinnedNoteNotifier.TAG, PinnedNoteNotifier.notificationId(edited))
         assertThat(editedNow.bigText()).isEqualTo("a2")
+    }
+
+    private companion object {
+        const val SETTLE_ROUNDS = 3
     }
 }
