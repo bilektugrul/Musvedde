@@ -26,6 +26,22 @@ Requirements: JDK 17+, Android SDK (compileSdk 37).
 
 Run the unit tests with `./gradlew :app:testDebugUnitTest`.
 
+If your user folder path contains spaces and Robolectric fails to load its native runtime, copy the `android-all-instrumented` jar from `~/.m2/repository/org/robolectric/` to a folder without spaces and pass `-ProbolectricDependencyDir=<that folder>`.
+
+## Performance
+
+Performance is the reason this app exists, so it is measured, not assumed:
+
+- The `baselineprofile` module holds a Baseline Profile generator and Macrobenchmarks for cold start, scrolling a 10,000-note list and typing into a note while 10,000 notes exist.
+- Debug builds have *Settings → Developer* actions to generate 1,000 or 10,000 sample notes for trying it by hand.
+
+With a device or emulator (API 29+) connected:
+
+```
+./gradlew :app:generateReleaseBaselineProfile
+./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest
+```
+
 ## Google Drive backup (optional)
 
 Folder backups work out of the box. Drive backups store files in the app's hidden `appDataFolder` and need a Google Cloud OAuth client that matches **your** build's package name and signing key. No keys live in this repository.

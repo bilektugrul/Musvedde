@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Musvedde"
 include(":app")
+include(":baselineprofile")

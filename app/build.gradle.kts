@@ -5,7 +5,10 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.room)
+    alias(libs.plugins.baselineprofile)
 }
+
+val devtoolsBuildTypes = setOf("debug", "benchmarkRelease", "nonMinifiedRelease")
 
 android {
     namespace = "dev.aliarslan.musvedde"
@@ -56,6 +59,15 @@ android {
     }
 }
 
+androidComponents {
+    onVariants { variant ->
+        if (variant.buildType in devtoolsBuildTypes) {
+            variant.sources.kotlin?.addStaticSourceDirectory("src/devtools/java")
+            variant.sources.manifests.addStaticManifestFile("src/devtools/AndroidManifest.xml")
+        }
+    }
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }
@@ -66,6 +78,8 @@ composeCompiler {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

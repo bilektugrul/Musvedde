@@ -65,6 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -359,7 +360,7 @@ private fun EditorFields(
             stringResource(R.string.editor_body_hint),
             hint,
             singleLine = false,
-            modifier = Modifier.padding(top = 12.dp, bottom = 120.dp),
+            modifier = Modifier.padding(top = 12.dp, bottom = 120.dp).testTag("editor_body"),
         )
     }
 }

@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -229,7 +230,7 @@ private fun NotesGrid(
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 96.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalItemSpacing = 10.dp,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().testTag("notes_grid"),
     ) {
         if (state.section == NotesSection.TRASHED) {
             item(key = "trash_header", span = StaggeredGridItemSpan.FullLine, contentType = "header") {
@@ -280,6 +281,7 @@ private fun LazyStaggeredGridScope.noteItems(
                 selected = note.id in state.selection,
                 previewSize = state.previewSize,
                 modifier = Modifier
+                    .testTag("note_card")
                     .then(dragModifier)
                     .combinedClickable(
                         onClick = { onOpen(note.id) },

@@ -12,6 +12,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dev.aliarslan.musvedde.ui.MainViewModel
@@ -35,7 +37,7 @@ class MainActivity : ComponentActivity() {
             val labels by viewModel.labels.collectAsStateWithLifecycle()
             val loaded = settings ?: return@setContent
             MusveddeTheme(loaded) {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Surface(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }, color = MaterialTheme.colorScheme.background) {
                     MusveddeNavHost(labels = labels, openNoteRequests = openNoteRequests.receiveAsFlow())
                 }
             }
