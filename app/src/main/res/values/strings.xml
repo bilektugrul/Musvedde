@@ -170,4 +170,14 @@
         <item quantity="one">Last %d backup</item>
         <item quantity="other">Last %d backups</item>
     </plurals>
+    <string name="error_log_share">Share log</string>
+    <string name="error_log_clear">Clear log</string>
+    <string name="error_log_clear_confirm">Delete all entries in the error log?</string>
+    <string name="error_log_empty">No errors recorded</string>
+    <string name="error_log_copy">Copy entry</string>
+    <string name="level_error">Error</string>
+    <string name="level_warning">Warning</string>
+    <string name="level_info">Info</string>
+    <string name="day_today">Today</string>
+    <string name="day_yesterday">Yesterday</string>
 </resources>

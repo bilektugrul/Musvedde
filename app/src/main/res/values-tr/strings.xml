@@ -169,4 +169,14 @@
         <item quantity="one">Son %d yedek</item>
         <item quantity="other">Son %d yedek</item>
     </plurals>
+    <string name="error_log_share">Günlüğü paylaş</string>
+    <string name="error_log_clear">Günlüğü temizle</string>
+    <string name="error_log_clear_confirm">Hata günlüğündeki tüm kayıtlar silinsin mi?</string>
+    <string name="error_log_empty">Kayıtlı hata yok</string>
+    <string name="error_log_copy">Kaydı kopyala</string>
+    <string name="level_error">Hata</string>
+    <string name="level_warning">Uyarı</string>
+    <string name="level_info">Bilgi</string>
+    <string name="day_today">Bugün</string>
+    <string name="day_yesterday">Dün</string>
 </resources>

@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import java.io.File
+import java.time.ZoneId
 import javax.inject.Named
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -33,6 +34,9 @@ object CoreModule {
 
     @Provides
     fun clock(): Clock = Clock.System
+
+    @Provides
+    fun zone(): ZoneId = ZoneId.systemDefault()
 
     @Provides
     @IoDispatcher
