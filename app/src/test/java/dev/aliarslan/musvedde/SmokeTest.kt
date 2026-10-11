@@ -6,6 +6,6 @@ import org.junit.Test
 class SmokeTest {
     @Test
     fun smokeTest() {
-        assertThat(BuildConfig.VERSION_NAME).isEqualTo("0.1.0")
+        assertThat(BuildConfig.VERSION_NAME).isEqualTo("0.2.0")
     }
 }
