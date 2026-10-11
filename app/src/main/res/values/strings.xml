@@ -185,4 +185,18 @@
     <string name="speed_normal">Normal</string>
     <string name="speed_fast">Fast</string>
     <string name="settings_reduce_motion_summary">Turn off page and list animations</string>
+    <string name="drive_setup_title">How to connect Google Drive</string>
+    <string name="drive_setup_summary">One-time setup in Google Cloud, about 5 minutes</string>
+    <string name="drive_setup_how">How?</string>
+    <string name="drive_setup_intro">Google only lets an app use Drive if it is registered in a Google Cloud project. Because Müsvedde is open source, you register your own copy once:</string>
+    <string name="drive_setup_step1">Open console.cloud.google.com, create a project and enable the "Google Drive API" (APIs &amp; Services → Library).</string>
+    <string name="drive_setup_step2">Configure the "OAuth consent screen": choose External, add your own Google account as a test user and add the scope …/auth/drive.appdata.</string>
+    <string name="drive_setup_step3">Go to Credentials → Create credentials → OAuth client ID, choose Android and enter the package name and SHA-1 below.</string>
+    <string name="drive_setup_step4">Wait a few minutes, then tap Connect and pick the account you added as a test user.</string>
+    <string name="drive_setup_package">Package name</string>
+    <string name="drive_setup_sha1">SHA-1 certificate fingerprint</string>
+    <string name="drive_setup_privacy">Backups go to a hidden app folder in your Drive. Müsvedde can\'t see your other Drive files. A different build (e.g. debug vs. release) has a different SHA-1 and needs its own OAuth client.</string>
+    <string name="drive_setup_open_console">Open Google Cloud Console</string>
+    <string name="drive_setup_connect">Connect</string>
+    <string name="drive_setup_copy">Copy %1$s</string>
 </resources>

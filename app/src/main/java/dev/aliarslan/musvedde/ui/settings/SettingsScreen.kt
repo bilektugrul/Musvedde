@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -71,6 +72,7 @@ fun SettingsScreen(
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     var showRestore by rememberSaveable { mutableStateOf(false) }
+    var showDriveSetup by rememberSaveable { mutableStateOf(false) }
 
     val consentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
         viewModel.onDriveConsentResult(it.data)
@@ -81,7 +83,14 @@ fun SettingsScreen(
                 is SettingsEvent.DriveConsent ->
                     consentLauncher.launch(IntentSenderRequest.Builder(event.pendingIntent.intentSender).build())
                 SettingsEvent.DriveConnected -> snackbar.showSnackbar(resources.getString(R.string.drive_connected))
-                is SettingsEvent.DriveFailed -> snackbar.showSnackbar(resources.getString(R.string.drive_failed, event.message))
+                is SettingsEvent.DriveFailed -> {
+                    val result = snackbar.showSnackbar(
+                        resources.getString(R.string.drive_failed, event.message),
+                        actionLabel = resources.getString(R.string.drive_setup_how),
+                        withDismissAction = true,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) showDriveSetup = true
+                }
                 is SettingsEvent.Restored ->
                     snackbar.showSnackbar(resources.getQuantityString(R.plurals.restore_done, event.count, event.count))
                 is SettingsEvent.RestoreFailed -> snackbar.showSnackbar(resources.getString(R.string.restore_failed, event.message))
@@ -115,6 +124,7 @@ fun SettingsScreen(
                     backupRunning = backupRunning,
                     restoring = restoring,
                     onRestore = { showRestore = true },
+                    onDriveSetup = { showDriveSetup = true },
                 )
             }
             item {
@@ -126,6 +136,9 @@ fun SettingsScreen(
         }
     }
 
+    if (showDriveSetup) {
+        DriveSetupDialog(onConnect = viewModel::connectDrive, onDismiss = { showDriveSetup = false })
+    }
     if (showRestore) {
         RestoreDialog(viewModel = viewModel, onDismiss = { showRestore = false })
     }
@@ -315,6 +328,7 @@ private fun BackupSection(
     backupRunning: Boolean,
     restoring: Boolean,
     onRestore: () -> Unit,
+    onDriveSetup: () -> Unit,
 ) {
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) viewModel.setBackupFolder(uri)
@@ -332,6 +346,7 @@ private fun BackupSection(
     } else {
         ActionRow(stringResource(R.string.backup_drive), stringResource(R.string.backup_drive_connect)) { viewModel.connectDrive() }
     }
+    ActionRow(stringResource(R.string.drive_setup_title), stringResource(R.string.drive_setup_summary), onClick = onDriveSetup)
     StatusLine(settings.lastDriveBackupAt, settings.lastDriveBackupError, settings.driveEnabled)
 
     ChoiceRow(

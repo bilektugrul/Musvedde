@@ -184,4 +184,18 @@
     <string name="speed_normal">Normal</string>
     <string name="speed_fast">Hızlı</string>
     <string name="settings_reduce_motion_summary">Sayfa ve liste animasyonlarını kapat</string>
+    <string name="drive_setup_title">Google Drive nasıl bağlanır</string>
+    <string name="drive_setup_summary">Google Cloud\'da tek seferlik kurulum, yaklaşık 5 dakika</string>
+    <string name="drive_setup_how">Nasıl?</string>
+    <string name="drive_setup_intro">Google, bir uygulamanın Drive\'ı kullanabilmesi için onun bir Google Cloud projesine kayıtlı olmasını ister. Müsvedde açık kaynak olduğu için kendi kopyanı bir kez kaydediyorsun:</string>
+    <string name="drive_setup_step1">console.cloud.google.com adresini aç, bir proje oluştur ve "Google Drive API"yi etkinleştir (API\'ler ve Hizmetler → Kitaplık).</string>
+    <string name="drive_setup_step2">"OAuth izin ekranı"nı yapılandır: Harici\'yi seç, kendi Google hesabını test kullanıcısı olarak ekle ve …/auth/drive.appdata kapsamını ekle.</string>
+    <string name="drive_setup_step3">Kimlik Bilgileri → Kimlik bilgisi oluştur → OAuth istemci kimliği\'ne git, Android\'i seç ve aşağıdaki paket adı ile SHA-1\'i gir.</string>
+    <string name="drive_setup_step4">Birkaç dakika bekle, sonra Bağlan\'a dokun ve test kullanıcısı olarak eklediğin hesabı seç.</string>
+    <string name="drive_setup_package">Paket adı</string>
+    <string name="drive_setup_sha1">SHA-1 sertifika parmak izi</string>
+    <string name="drive_setup_privacy">Yedekler Drive\'ındaki gizli bir uygulama klasörüne gider. Müsvedde Drive\'daki diğer dosyalarını göremez. Farklı bir build\'in (ör. debug ve release) SHA-1\'i farklıdır ve kendi OAuth istemcisini ister.</string>
+    <string name="drive_setup_open_console">Google Cloud Console\'u aç</string>
+    <string name="drive_setup_connect">Bağlan</string>
+    <string name="drive_setup_copy">%1$s kopyala</string>
 </resources>
