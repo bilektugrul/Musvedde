@@ -39,9 +39,11 @@ class BackupSerializer @Inject constructor(
         while (true) {
             val page = db.noteDao().pageAfter(lastId, PAGE_SIZE)
             if (page.isEmpty()) break
+            val versions = db.noteVersionDao().forNotes(page.map { it.id }).groupBy { it.noteId }
             page.forEach { note ->
                 if (count > 0) writer.write(",")
-                writer.write(json.encodeToString(note.toBackup(noteLabels[note.id].orEmpty())))
+                val history = versions[note.id].orEmpty().map { BackupVersion(it.title, it.body, it.createdAt) }
+                writer.write(json.encodeToString(note.toBackup(noteLabels[note.id].orEmpty(), history)))
                 count++
             }
             lastId = page.last().id
@@ -93,7 +95,7 @@ class BackupSerializer @Inject constructor(
         return result
     }
 
-    private fun NoteEntity.toBackup(labels: List<String>) = BackupNote(
+    private fun NoteEntity.toBackup(labels: List<String>, versions: List<BackupVersion>) = BackupNote(
         title = title,
         body = body,
         color = color,
@@ -105,10 +107,11 @@ class BackupSerializer @Inject constructor(
         updatedAt = updatedAt,
         trashedAt = trashedAt,
         labelNames = labels,
+        versions = versions,
     )
 
     companion object {
-        const val FORMAT_VERSION = 1
+        const val FORMAT_VERSION = 2
         const val FILE_PREFIX = "musvedde-backup-"
         private const val MANIFEST = "manifest.json"
         private const val DATA = "data.json"

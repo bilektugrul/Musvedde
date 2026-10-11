@@ -23,6 +23,14 @@ data class BackupNote(
     val updatedAt: Long,
     val trashedAt: Long? = null,
     val labelNames: List<String> = emptyList(),
+    val versions: List<BackupVersion> = emptyList(),
+)
+
+@Serializable
+data class BackupVersion(
+    val title: String,
+    val body: String,
+    val createdAt: Long,
 )
 
 @Serializable

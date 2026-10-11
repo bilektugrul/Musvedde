@@ -6,6 +6,8 @@ import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.NoteContentKey
 import dev.aliarslan.musvedde.data.db.NoteEntity
 import dev.aliarslan.musvedde.data.db.NoteLabelCrossRef
+import dev.aliarslan.musvedde.data.db.NoteVersionEntity
+import dev.aliarslan.musvedde.data.db.utf8Size
 import dev.aliarslan.musvedde.data.note.Positions
 import dev.aliarslan.musvedde.domain.NoteColor
 import dev.aliarslan.musvedde.domain.NoteState
@@ -63,6 +65,19 @@ class RestoreService @Inject constructor(
                 labels.insertCrossRefs(
                     chunk.zip(ids).flatMap { (note, id) ->
                         note.labelNames.map { NoteLabelCrossRef(noteId = id, labelId = labelIds.getValue(it)) }
+                    },
+                )
+                db.noteVersionDao().insertAll(
+                    chunk.zip(ids).flatMap { (note, id) ->
+                        note.versions.map {
+                            NoteVersionEntity(
+                                noteId = id,
+                                title = it.title,
+                                body = it.body,
+                                createdAt = it.createdAt,
+                                sizeBytes = utf8Size(it.title, it.body),
+                            )
+                        }
                     },
                 )
             }
