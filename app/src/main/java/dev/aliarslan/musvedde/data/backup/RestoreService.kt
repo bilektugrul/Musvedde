@@ -7,6 +7,8 @@ import dev.aliarslan.musvedde.data.db.NoteContentKey
 import dev.aliarslan.musvedde.data.db.NoteEntity
 import dev.aliarslan.musvedde.data.db.NoteLabelCrossRef
 import dev.aliarslan.musvedde.data.note.Positions
+import dev.aliarslan.musvedde.domain.NoteColor
+import dev.aliarslan.musvedde.domain.NoteState
 import java.io.InputStream
 import javax.inject.Inject
 
@@ -43,17 +45,18 @@ class RestoreService @Inject constructor(
             toInsert.chunked(CHUNK).forEach { chunk ->
                 val ids = notes.insertAll(
                     chunk.map { note ->
+                        val state = NoteState.entries.firstOrNull { it.name == note.state } ?: NoteState.ACTIVE
                         NoteEntity(
                             title = note.title,
                             body = note.body,
-                            color = note.color,
+                            color = NoteColor.fromName(note.color).name,
                             pinnedToTop = note.pinnedToTop,
                             pinnedToNotification = note.pinnedToNotification,
-                            state = note.state,
+                            state = state.name,
                             position = if (mode == RestoreMode.MERGE) offset + (note.position - minPosition) else note.position,
                             createdAt = note.createdAt,
                             updatedAt = note.updatedAt,
-                            trashedAt = note.trashedAt,
+                            trashedAt = if (state == NoteState.TRASHED) note.trashedAt ?: note.updatedAt else null,
                         )
                     },
                 )

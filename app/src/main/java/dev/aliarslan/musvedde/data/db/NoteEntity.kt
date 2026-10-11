@@ -35,7 +35,7 @@ fun NoteEntity.toDomain(labelIds: List<Long> = emptyList()) = Note(
     color = NoteColor.fromName(color),
     pinnedToTop = pinnedToTop,
     pinnedToNotification = pinnedToNotification,
-    state = NoteState.valueOf(state),
+    state = NoteState.entries.firstOrNull { it.name == state } ?: NoteState.ACTIVE,
     position = position,
     createdAt = createdAt,
     updatedAt = updatedAt,

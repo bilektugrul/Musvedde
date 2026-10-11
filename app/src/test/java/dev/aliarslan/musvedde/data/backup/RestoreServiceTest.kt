@@ -3,6 +3,8 @@ package dev.aliarslan.musvedde.data.backup
 import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.domain.NoteColor
+import dev.aliarslan.musvedde.domain.NoteState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -61,6 +63,35 @@ class RestoreServiceTest {
         restore.restoreFrom(ByteArrayInputStream(bytes), RestoreMode.REPLACE).getOrThrow()
 
         assertThat(db.noteDao().pageAll(10, 0).map { it.body }).containsExactly("yedekteki")
+    }
+
+    @Test
+    fun unknownStateIsRestoredAsActive() = runTest {
+        val content = BackupContent(
+            manifest = BackupManifest(appVersion = "9", createdAt = 0, noteCount = 1),
+            labels = emptyList(),
+            notes = listOf(
+                BackupNote(
+                    title = "",
+                    body = "garip",
+                    color = "NOPE",
+                    pinnedToTop = false,
+                    pinnedToNotification = false,
+                    state = "BOGUS",
+                    position = 0,
+                    createdAt = 1,
+                    updatedAt = 1,
+                    trashedAt = 5,
+                ),
+            ),
+        )
+
+        restore.restore(content, RestoreMode.REPLACE).getOrThrow()
+
+        val note = notes.get(db.noteDao().pageAll(1, 0).single().id)!!
+        assertThat(note.state).isEqualTo(NoteState.ACTIVE)
+        assertThat(note.trashedAt).isNull()
+        assertThat(note.color).isEqualTo(NoteColor.DEFAULT)
     }
 
     @Test
