@@ -7,7 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
+import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -37,6 +44,7 @@ fun MusveddeNavHost(
     val scope = rememberCoroutineScope()
     var showEditLabels by rememberSaveable { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val canGoBack = backStackEntry != null && navController.previousBackStackEntry != null
     val currentNotes = backStackEntry
         ?.takeIf { it.destination.hasRoute(NotesRoute::class) }
         ?.toRoute<NotesRoute>()
@@ -73,7 +81,17 @@ fun MusveddeNavHost(
             )
         },
     ) {
-        NavHost(navController, startDestination = NotesRoute()) {
+        val appearance = LocalAppearance.current
+        val duration = appearance.motionMillis(320)
+        NavHost(
+            navController,
+            startDestination = NotesRoute(),
+            modifier = Modifier.swipeToGoBack(enabled = canGoBack && !drawerState.isOpen),
+            enterTransition = { slideInHorizontally(tween(duration)) { it } },
+            exitTransition = { slideOutHorizontally(tween(duration)) { -it / 4 } + fadeOut(tween(duration), targetAlpha = 0.6f) },
+            popEnterTransition = { slideInHorizontally(tween(duration)) { -it / 4 } + fadeIn(tween(duration), initialAlpha = 0.6f) },
+            popExitTransition = { slideOutHorizontally(tween(duration)) { it } },
+        ) {
             composable<NotesRoute> {
                 NotesScreen(
                     onMenu = { scope.launch { drawerState.open() } },
