@@ -40,4 +40,47 @@
     <string name="color_pink">Pink</string>
     <string name="color_brown">Brown</string>
     <string name="color_gray">Gray</string>
+    <string name="action_open_menu">Open menu</string>
+    <string name="search_hint">Search your notes</string>
+    <string name="search_in">Search in %1$s</string>
+    <string name="action_clear_search">Clear search</string>
+    <string name="action_list_view">List view</string>
+    <string name="action_grid_view">Grid view</string>
+    <string name="action_clear_selection">Clear selection</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_delete_forever">Delete forever</string>
+    <string name="action_new_note">New note</string>
+    <string name="action_empty_trash">Empty trash</string>
+    <string name="confirm_empty_trash">Delete all notes in the trash forever?</string>
+    <string name="confirm_delete_forever">Delete the selected notes forever?</string>
+    <string name="header_pinned">PINNED</string>
+    <string name="header_others">OTHERS</string>
+    <string name="trash_auto_delete">Notes in the trash are deleted after 7 days.</string>
+    <string name="empty_search">No matching notes</string>
+    <string name="empty_archive">Your archived notes appear here</string>
+    <string name="empty_trash">No notes in the trash</string>
+    <string name="empty_notes">Notes you write appear here</string>
+    <string name="note_pinned_to_notification">Pinned to notifications</string>
+    <string name="action_done">Done</string>
+    <string name="label_delete">Delete label %1$s</string>
+    <plurals name="selected_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <plurals name="event_trashed">
+        <item quantity="one">Note moved to trash</item>
+        <item quantity="other">%d notes moved to trash</item>
+    </plurals>
+    <plurals name="event_archived">
+        <item quantity="one">Note archived</item>
+        <item quantity="other">%d notes archived</item>
+    </plurals>
+    <plurals name="event_unarchived">
+        <item quantity="one">Note unarchived</item>
+        <item quantity="other">%d notes unarchived</item>
+    </plurals>
+    <plurals name="event_restored">
+        <item quantity="one">Note restored</item>
+        <item quantity="other">%d notes restored</item>
+    </plurals>
 </resources>

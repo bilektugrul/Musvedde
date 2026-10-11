@@ -1,0 +1,140 @@
+package dev.aliarslan.musvedde.ui.notes
+
+import androidx.lifecycle.SavedStateHandle
+import com.google.common.truth.Truth.assertThat
+import dev.aliarslan.musvedde.data.db.MusveddeDatabase
+import dev.aliarslan.musvedde.data.db.inMemoryDatabase
+import dev.aliarslan.musvedde.data.note.LabelRepository
+import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
+import dev.aliarslan.musvedde.data.settings.SettingsRepository
+import dev.aliarslan.musvedde.domain.NoteState
+import dev.aliarslan.musvedde.ui.NotesSection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+class NotesViewModelTest {
+    private val dispatcher = StandardTestDispatcher()
+    private val appScope = CoroutineScope(dispatcher + SupervisorJob())
+    private lateinit var db: MusveddeDatabase
+    private lateinit var notes: NoteRepository
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+        db = inMemoryDatabase(dispatcher)
+        notes = NoteRepository(db, clock = { 1L }, io = dispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        appScope.cancel()
+        db.close()
+        Dispatchers.resetMain()
+    }
+
+    private fun viewModel(section: NotesSection = NotesSection.ACTIVE) = NotesViewModel(
+        savedStateHandle = SavedStateHandle(mapOf("section" to section, "labelId" to -1L)),
+        notes = notes,
+        labels = LabelRepository(db.labelDao(), dispatcher),
+        settings = SettingsRepository(InMemoryPreferencesDataStore()),
+        appScope = appScope,
+    )
+
+    private fun TestScope.collect(vm: NotesViewModel) {
+        backgroundScope.launch { vm.uiState.collect {} }
+    }
+
+    @Test
+    fun splitsPinnedAndOthers() = runTest(dispatcher) {
+        val a = notes.create("", "a")
+        val b = notes.create("", "b")
+        notes.setPinnedToTop(listOf(a), true)
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertThat(state.pinned.map { it.id }).containsExactly(a)
+        assertThat(state.others.map { it.id }).containsExactly(b)
+    }
+
+    @Test
+    fun searchIsDebounced150ms() = runTest(dispatcher) {
+        notes.create("", "yağmur")
+        notes.create("", "güneş")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        vm.setQuery("yağ")
+        advanceTimeBy(100)
+        assertThat(vm.uiState.value.others).hasSize(2)
+
+        advanceTimeBy(60)
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.others.map { it.preview }).containsExactly("yağmur")
+    }
+
+    @Test
+    fun trashSelectedEmitsUndoEventAndUndoRestores() = runTest(dispatcher) {
+        val id = notes.create("", "satır")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        vm.toggleSelect(id)
+        vm.trashSelected()
+        advanceUntilIdle()
+        val event = vm.events.first()
+        assertThat(event).isEqualTo(NotesEvent.Trashed(count = 1))
+        assertThat(notes.get(id)!!.state).isEqualTo(NoteState.TRASHED)
+        assertThat(vm.uiState.value.selection).isEmpty()
+
+        vm.undoLast()
+        advanceUntilIdle()
+        assertThat(notes.get(id)!!.state).isEqualTo(NoteState.ACTIVE)
+    }
+
+    @Test
+    fun reorderDisabledWhileSearching() = runTest(dispatcher) {
+        notes.create("", "a")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.canReorder).isTrue()
+
+        vm.setQuery("a")
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.canReorder).isFalse()
+    }
+
+    @Test
+    fun trashSectionCannotReorder() = runTest(dispatcher) {
+        val vm = viewModel(NotesSection.TRASHED)
+        collect(vm)
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.canReorder).isFalse()
+    }
+}

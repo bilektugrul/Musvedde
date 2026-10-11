@@ -39,4 +39,47 @@
     <string name="color_pink">Pembe</string>
     <string name="color_brown">Kahverengi</string>
     <string name="color_gray">Gri</string>
+    <string name="action_open_menu">Menüyü aç</string>
+    <string name="search_hint">Notlarında ara</string>
+    <string name="search_in">%1$s içinde ara</string>
+    <string name="action_clear_search">Aramayı temizle</string>
+    <string name="action_list_view">Liste görünümü</string>
+    <string name="action_grid_view">Izgara görünümü</string>
+    <string name="action_clear_selection">Seçimi kaldır</string>
+    <string name="action_restore">Geri yükle</string>
+    <string name="action_delete_forever">Kalıcı olarak sil</string>
+    <string name="action_new_note">Yeni not</string>
+    <string name="action_empty_trash">Çöp kutusunu boşalt</string>
+    <string name="confirm_empty_trash">Çöp kutusundaki tüm notlar kalıcı olarak silinsin mi?</string>
+    <string name="confirm_delete_forever">Seçili notlar kalıcı olarak silinsin mi?</string>
+    <string name="header_pinned">SABİTLENMİŞ</string>
+    <string name="header_others">DİĞERLERİ</string>
+    <string name="trash_auto_delete">Çöp kutusundaki notlar 7 gün sonra silinir.</string>
+    <string name="empty_search">Eşleşen not yok</string>
+    <string name="empty_archive">Arşivlediğin notlar burada görünür</string>
+    <string name="empty_trash">Çöp kutusunda not yok</string>
+    <string name="empty_notes">Yazdığın notlar burada görünür</string>
+    <string name="note_pinned_to_notification">Bildirime sabitlendi</string>
+    <string name="action_done">Tamam</string>
+    <string name="label_delete">%1$s etiketini sil</string>
+    <plurals name="selected_count">
+        <item quantity="one">%d seçildi</item>
+        <item quantity="other">%d seçildi</item>
+    </plurals>
+    <plurals name="event_trashed">
+        <item quantity="one">Not çöp kutusuna taşındı</item>
+        <item quantity="other">%d not çöp kutusuna taşındı</item>
+    </plurals>
+    <plurals name="event_archived">
+        <item quantity="one">Not arşivlendi</item>
+        <item quantity="other">%d not arşivlendi</item>
+    </plurals>
+    <plurals name="event_unarchived">
+        <item quantity="one">Not arşivden çıkarıldı</item>
+        <item quantity="other">%d not arşivden çıkarıldı</item>
+    </plurals>
+    <plurals name="event_restored">
+        <item quantity="one">Not geri yüklendi</item>
+        <item quantity="other">%d not geri yüklendi</item>
+    </plurals>
 </resources>

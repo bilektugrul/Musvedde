@@ -22,6 +22,11 @@ import androidx.navigation.toRoute
 import dev.aliarslan.musvedde.domain.Label
 import dev.aliarslan.musvedde.notification.rememberNotificationPermissionRequester
 import dev.aliarslan.musvedde.ui.editor.EditorScreen
+import dev.aliarslan.musvedde.ui.labels.EditLabelsDialog
+import dev.aliarslan.musvedde.ui.notes.NotesScreen
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -35,6 +40,7 @@ fun MusveddeNavHost(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val requestNotificationPermission = rememberNotificationPermissionRequester(onDenied = {})
     val scope = rememberCoroutineScope()
+    var showEditLabels by rememberSaveable { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentNotes = backStackEntry
         ?.takeIf { it.destination.hasRoute(NotesRoute::class) }
@@ -66,14 +72,20 @@ fun MusveddeNavHost(
                         }
                     }
                 },
-                onEditLabels = { closeDrawerThen { } },
+                onEditLabels = { closeDrawerThen { showEditLabels = true } },
                 onSettings = { closeDrawerThen { navController.navigate(SettingsRoute) } },
                 onErrorLog = { closeDrawerThen { navController.navigate(ErrorLogRoute) } },
             )
         },
     ) {
         NavHost(navController, startDestination = NotesRoute()) {
-            composable<NotesRoute> { Placeholder("Notes") }
+            composable<NotesRoute> {
+                NotesScreen(
+                    onMenu = { scope.launch { drawerState.open() } },
+                    onOpenNote = { id -> navController.navigate(EditorRoute(id)) },
+                    onNewNote = { navController.navigate(EditorRoute()) },
+                )
+            }
             composable<EditorRoute> {
                 EditorScreen(
                     onBack = { navController.popBackStack() },
@@ -84,6 +96,7 @@ fun MusveddeNavHost(
             composable<ErrorLogRoute> { Placeholder("Error log") }
         }
     }
+    if (showEditLabels) EditLabelsDialog(onDismiss = { showEditLabels = false })
 }
 
 @Composable
