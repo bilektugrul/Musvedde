@@ -8,7 +8,9 @@ Müsvedde exists because popular note apps get noticeably slower to type in once
 
 - Notes with title and body, 12 colors, pin to top, archive, trash (auto-emptied after 7 days), labels
 - Staggered grid or list, drag-and-drop ordering, full-text search
-- Instant autosave, undo/redo, focus mode
+- Instant autosave, undo/redo, focus mode, tap anywhere to start writing
+- Version history: a version is kept each time you close a note after editing it; compare, restore or delete single versions
+- Storage overview: space used on the phone, per-note and per-version sizes
 - Pin a note to the notification shade
 - Backups to a folder of your choice (works great with a synced folder) and, optionally, Google Drive; daily, weekly, monthly or on demand
 - System, light, dark and AMOLED black themes, Material You colors
