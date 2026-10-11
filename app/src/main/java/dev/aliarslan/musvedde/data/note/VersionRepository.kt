@@ -57,6 +57,13 @@ class VersionRepository @Inject constructor(
         }
     }
 
+    suspend fun hasVersions(noteId: Long): Boolean = withContext(io) { dao.countForNote(noteId) > 0 }
+
+    suspend fun restoreLatest(noteId: Long) = withContext(io) {
+        val latest = dao.latestForNote(noteId) ?: return@withContext
+        notes.updateContent(noteId, latest.title, latest.body, clock.now())
+    }
+
     suspend fun delete(versionId: Long) = withContext(io) { dao.delete(versionId) }
 
     suspend fun clearNote(noteId: Long) = withContext(io) { dao.deleteForNote(noteId) }

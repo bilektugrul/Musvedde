@@ -74,6 +74,13 @@ fun NoteCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            if (note.title.isBlank() && note.preview.isBlank()) {
+                Text(
+                    stringResource(R.string.note_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                )
+            }
             if (note.labelIds.isNotEmpty() || note.pinnedToNotification) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (note.pinnedToNotification) {

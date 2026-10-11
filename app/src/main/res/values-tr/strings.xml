@@ -230,4 +230,6 @@
         <item quantity="one">%d sürüm</item>
         <item quantity="other">%d sürüm</item>
     </plurals>
+    <string name="event_emptied_to_trash">Boşaltılan not çöp kutusuna taşındı</string>
+    <string name="note_empty">Boş not</string>
 </resources>

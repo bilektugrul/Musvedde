@@ -91,6 +91,7 @@ fun NotesScreen(
                 is NotesEvent.Archived -> resources.getQuantityString(R.plurals.event_archived, event.count, event.count)
                 is NotesEvent.Unarchived -> resources.getQuantityString(R.plurals.event_unarchived, event.count, event.count)
                 is NotesEvent.Restored -> resources.getQuantityString(R.plurals.event_restored, event.count, event.count)
+                NotesEvent.EmptiedToTrash -> resources.getString(R.string.event_emptied_to_trash)
             }
             val result = snackbar.showSnackbar(message, actionLabel = resources.getString(R.string.action_undo), withDismissAction = true)
             if (result == SnackbarResult.ActionPerformed) viewModel.undoLast()

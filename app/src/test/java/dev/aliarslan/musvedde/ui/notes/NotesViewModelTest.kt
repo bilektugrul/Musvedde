@@ -5,7 +5,10 @@ import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.note.LabelRepository
+import dev.aliarslan.musvedde.data.note.NoteEvent
+import dev.aliarslan.musvedde.data.note.NoteEventBus
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.domain.NoteState
@@ -37,12 +40,15 @@ class NotesViewModelTest {
     private val appScope = CoroutineScope(dispatcher + SupervisorJob())
     private lateinit var db: MusveddeDatabase
     private lateinit var notes: NoteRepository
+    private lateinit var versions: VersionRepository
+    private val noteEvents = NoteEventBus()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         db = inMemoryDatabase(dispatcher)
         notes = NoteRepository(db, clock = { 1L }, io = dispatcher)
+        versions = VersionRepository(db, clock = { 2L }, io = dispatcher)
     }
 
     @After
@@ -55,6 +61,8 @@ class NotesViewModelTest {
     private fun viewModel(section: NotesSection = NotesSection.ACTIVE) = NotesViewModel(
         savedStateHandle = SavedStateHandle(mapOf("section" to section, "labelId" to -1L)),
         notes = notes,
+        versions = versions,
+        noteEvents = noteEvents,
         labels = LabelRepository(db.labelDao(), dispatcher),
         settings = SettingsRepository(InMemoryPreferencesDataStore()),
         appScope = appScope,
@@ -136,5 +144,27 @@ class NotesViewModelTest {
         advanceUntilIdle()
 
         assertThat(vm.uiState.value.canReorder).isFalse()
+    }
+
+    @Test
+    fun emptiedNoteOffersUndoThatRestoresItsText() = runTest(dispatcher) {
+        val id = notes.create("", "not")
+        versions.beginSession(id, "", "not", 1)
+        notes.updateContent(id, "", "")
+        versions.endSession(id)
+        notes.trash(listOf(id))
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        noteEvents.send(NoteEvent.EmptiedToTrash(id))
+        advanceUntilIdle()
+        assertThat(vm.events.first()).isEqualTo(NotesEvent.EmptiedToTrash)
+
+        vm.undoLast()
+        advanceUntilIdle()
+        val note = notes.get(id)!!
+        assertThat(note.state).isEqualTo(NoteState.ACTIVE)
+        assertThat(note.body).isEqualTo("not")
     }
 }

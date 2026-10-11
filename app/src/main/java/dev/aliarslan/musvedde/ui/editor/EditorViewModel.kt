@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.core.Clock
+import dev.aliarslan.musvedde.data.note.NoteEvent
+import dev.aliarslan.musvedde.data.note.NoteEventBus
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
@@ -62,6 +64,7 @@ class EditorViewModel @Inject constructor(
     private val settings: SettingsRepository,
     @param:ApplicationScope private val appScope: CoroutineScope,
     private val clock: Clock,
+    private val noteEvents: NoteEventBus,
 ) : ViewModel() {
 
     val title = TextFieldState()
@@ -222,12 +225,24 @@ class EditorViewModel @Inject constructor(
         finished = true
         appScope.launch {
             saver.flush().join()
-            noteId?.let { id ->
-                notes.deleteIfBlank(id)
-                if (sessionStarted) versions.endSession(id)
-            }
+            noteId?.let { id -> close(id) }
         }
     }
 
     override fun onCleared() = finish()
+
+    private suspend fun close(id: Long) {
+        val note = notes.get(id) ?: return
+        val blank = note.title.isBlank() && note.body.isBlank()
+        val hadContent = baseline.title.isNotBlank() || baseline.body.isNotBlank() || versions.hasVersions(id)
+        if (sessionStarted) versions.endSession(id)
+        when {
+            !blank -> Unit
+            hadContent && note.state != NoteState.TRASHED -> {
+                notes.trash(listOf(id))
+                noteEvents.send(NoteEvent.EmptiedToTrash(id))
+            }
+            !hadContent -> notes.deleteIfBlank(id)
+        }
+    }
 }

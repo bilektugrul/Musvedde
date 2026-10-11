@@ -8,7 +8,11 @@ import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.NoteEventBus
+import dev.aliarslan.musvedde.data.note.NoteEvent
 import dev.aliarslan.musvedde.data.note.VersionRepository
+import dev.aliarslan.musvedde.domain.NoteState
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
@@ -36,6 +40,7 @@ class EditorViewModelTest {
     private lateinit var db: MusveddeDatabase
     private lateinit var notes: NoteRepository
     private lateinit var versions: VersionRepository
+    private val noteEvents = NoteEventBus()
     private val appScope = CoroutineScope(dispatcher + SupervisorJob())
 
     @Before
@@ -61,6 +66,7 @@ class EditorViewModelTest {
         settings = SettingsRepository(InMemoryPreferencesDataStore()),
         appScope = appScope,
         clock = { 1L },
+        noteEvents = noteEvents,
     )
 
     private suspend fun count() = db.noteDao().count()
@@ -171,5 +177,43 @@ class EditorViewModelTest {
         advanceUntilIdle()
 
         assertThat(vm.body.text.toString()).isEqualTo("geri yüklendi")
+    }
+
+    @Test
+    fun emptyingAnExistingNoteMovesItToTrashWithItsHistory() = runTest(dispatcher) {
+        val id = notes.create("Başlık", "uzun bir not")
+        val received = mutableListOf<NoteEvent>()
+        backgroundScope.launch { noteEvents.events.collect { received += it } }
+        val vm = viewModel(noteId = id)
+        advanceUntilIdle()
+
+        vm.title.setTextAndPlaceCursorAtEnd("")
+        vm.body.setTextAndPlaceCursorAtEnd("")
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+        vm.finish()
+        advanceUntilIdle()
+
+        val note = notes.get(id)!!
+        assertThat(note.state).isEqualTo(NoteState.TRASHED)
+        assertThat(versions.observe(id).first().map { it.body }).containsExactly("uzun bir not")
+        assertThat(received).containsExactly(NoteEvent.EmptiedToTrash(id))
+    }
+
+    @Test
+    fun newNoteTypedAndErasedIsDeleted() = runTest(dispatcher) {
+        val vm = viewModel(noteId = 0)
+        advanceUntilIdle()
+
+        vm.body.setTextAndPlaceCursorAtEnd("a")
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+        vm.body.setTextAndPlaceCursorAtEnd("")
+        Snapshot.sendApplyNotifications()
+        advanceUntilIdle()
+        vm.finish()
+        advanceUntilIdle()
+
+        assertThat(count()).isEqualTo(0)
     }
 }

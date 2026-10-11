@@ -6,7 +6,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteFilter
+import dev.aliarslan.musvedde.data.note.NoteEvent
+import dev.aliarslan.musvedde.data.note.NoteEventBus
 import dev.aliarslan.musvedde.data.note.NoteRepository
+import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.domain.EditorFont
@@ -60,6 +63,7 @@ sealed interface NotesEvent {
     data class Archived(val count: Int) : NotesEvent
     data class Unarchived(val count: Int) : NotesEvent
     data class Restored(val count: Int) : NotesEvent
+    data object EmptiedToTrash : NotesEvent
 }
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -67,6 +71,8 @@ sealed interface NotesEvent {
 class NotesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val notes: NoteRepository,
+    private val versions: VersionRepository,
+    private val noteEvents: NoteEventBus,
     private val labels: LabelRepository,
     private val settings: SettingsRepository,
     @param:ApplicationScope private val appScope: CoroutineScope,
@@ -118,6 +124,19 @@ class NotesViewModel @Inject constructor(
     val events: Flow<NotesEvent> = eventChannel.receiveAsFlow()
 
     private var lastUndo: (suspend () -> Unit)? = null
+
+    init {
+        viewModelScope.launch {
+            noteEvents.events.collect { event ->
+                when (event) {
+                    is NoteEvent.EmptiedToTrash -> remember(NotesEvent.EmptiedToTrash) {
+                        notes.restore(listOf(event.noteId))
+                        versions.restoreLatest(event.noteId)
+                    }
+                }
+            }
+        }
+    }
 
     fun setQuery(value: String) {
         query.value = value

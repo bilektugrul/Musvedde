@@ -21,6 +21,9 @@ interface NoteVersionDao {
     @Query("SELECT * FROM note_versions WHERE noteId = :noteId ORDER BY createdAt DESC, id DESC LIMIT 1")
     suspend fun latestForNote(noteId: Long): NoteVersionEntity?
 
+    @Query("SELECT COUNT(*) FROM note_versions WHERE noteId = :noteId")
+    suspend fun countForNote(noteId: Long): Int
+
     @Query("SELECT * FROM note_versions WHERE id = :id")
     suspend fun getById(id: Long): NoteVersionEntity?
 

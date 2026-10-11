@@ -112,4 +112,15 @@ class VersionRepositoryTest {
         versions.clearAll()
         assertThat(bodies(other)).isEmpty()
     }
+
+    @Test
+    fun restoreLatestBringsBackTheNewestVersion() = runTest {
+        val id = notes.create("", "a")
+        session(id, "b")
+        notes.updateContent(id, "", "")
+
+        versions.restoreLatest(id)
+
+        assertThat(notes.get(id)!!.body).isEqualTo("b")
+    }
 }
