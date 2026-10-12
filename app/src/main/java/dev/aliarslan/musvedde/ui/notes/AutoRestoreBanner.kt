@@ -11,19 +11,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,10 +39,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.aliarslan.musvedde.R
 import dev.aliarslan.musvedde.data.backup.AutoRestore
 import dev.aliarslan.musvedde.data.backup.AutoRestoreState
+import dev.aliarslan.musvedde.ui.lock.BackupPinDialog
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -43,10 +53,17 @@ class AutoRestoreViewModel @Inject constructor(private val autoRestore: AutoRest
     val state = autoRestore.state
 
     fun dismiss() = autoRestore.dismiss()
+
+    fun unlockPending(pin: String) = viewModelScope.launch { autoRestore.unlockPending(pin) }
 }
 
 @Composable
-fun AutoRestoreBanner(state: AutoRestoreState?, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+fun AutoRestoreBanner(
+    state: AutoRestoreState?,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    onPin: (String) -> Unit = {},
+) {
     val lastShown = remember { arrayOfNulls<AutoRestoreState>(1) }
     if (state != null) lastShown[0] = state
     val shown = state ?: lastShown[0]
@@ -56,12 +73,12 @@ fun AutoRestoreBanner(state: AutoRestoreState?, onDismiss: () -> Unit, modifier:
         exit = shrinkVertically() + fadeOut(),
         modifier = modifier,
     ) {
-        shown?.let { BannerContent(it, onDismiss) }
+        shown?.let { BannerContent(it, onDismiss, onPin) }
     }
 }
 
 @Composable
-private fun BannerContent(state: AutoRestoreState, onDismiss: () -> Unit) {
+private fun BannerContent(state: AutoRestoreState, onDismiss: () -> Unit, onPin: (String) -> Unit) {
     val context = LocalContext.current
     val resources = LocalResources.current
     val failed = state is AutoRestoreState.Failed
@@ -135,6 +152,31 @@ private fun BannerContent(state: AutoRestoreState, onDismiss: () -> Unit) {
                 }
                 AutoRestoreState.Restoring -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp, end = 12.dp))
                 else -> Unit
+            }
+            if (state is AutoRestoreState.Done && state.lockedPending > 0) {
+                var askPin by rememberSaveable { mutableStateOf(false) }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                    Icon(Icons.Outlined.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(
+                        resources.getQuantityString(R.plurals.auto_restore_locked_pending, state.lockedPending, state.lockedPending),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                    )
+                    TextButton(onClick = { askPin = true }) { Text(stringResource(R.string.auto_restore_enter_pin)) }
+                }
+                if (askPin || state.wrongPin) {
+                    BackupPinDialog(
+                        wrongPin = state.wrongPin,
+                        onPin = {
+                            askPin = false
+                            onPin(it)
+                        },
+                        onDismiss = {
+                            askPin = false
+                            if (state.wrongPin) onDismiss()
+                        },
+                    )
+                }
             }
         }
     }

@@ -353,4 +353,9 @@
     <string name="restore_pin_title">Kilitli notların PIN\'i</string>
     <string name="restore_pin_message">Bu yedekte kilitli notlar var. Yedeğin alındığı sırada ayarlı olan PIN\'i gir.</string>
     <string name="restore_pin_wrong">Bu PIN bu yedeği açmıyor</string>
+    <plurals name="auto_restore_locked_pending">
+        <item quantity="one">1 kilitli not yedeğin PIN\'ini bekliyor</item>
+        <item quantity="other">%d kilitli not yedeğin PIN\'ini bekliyor</item>
+    </plurals>
+    <string name="auto_restore_enter_pin">PIN gir</string>
 </resources>

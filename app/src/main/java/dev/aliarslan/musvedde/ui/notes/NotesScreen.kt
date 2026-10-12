@@ -147,7 +147,7 @@ fun NotesScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (state.section == NotesSection.ACTIVE) {
-                AutoRestoreBanner(restoreState, onDismiss = autoRestoreViewModel::dismiss)
+                AutoRestoreBanner(restoreState, onDismiss = autoRestoreViewModel::dismiss, onPin = autoRestoreViewModel::unlockPending)
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (state.loaded && state.pinned.isEmpty() && state.others.isEmpty()) {

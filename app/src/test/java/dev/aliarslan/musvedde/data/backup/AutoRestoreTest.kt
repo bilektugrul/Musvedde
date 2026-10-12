@@ -2,6 +2,9 @@ package dev.aliarslan.musvedde.data.backup
 
 import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
+import dev.aliarslan.musvedde.data.lock.FakeKeyWrapper
+import dev.aliarslan.musvedde.data.lock.LockConfig
+import dev.aliarslan.musvedde.data.lock.LockManager
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
@@ -28,6 +31,7 @@ class AutoRestoreTest {
     private val settings = SettingsRepository(InMemoryPreferencesDataStore())
     private val logger = RecordingLogger()
     private val drive = FakeSilentSource()
+    private val lockManager = LockManager(InMemoryPreferencesDataStore(), FakeKeyWrapper(), clock = { 1L }, LockConfig(1_000, 1_000))
 
     @After
     fun tearDown() {
@@ -48,6 +52,7 @@ class AutoRestoreTest {
         serializer = BackupSerializer(db, clock = { 1L }),
         restoreService = RestoreService(db, BackupSerializer(db, clock = { 1L })),
         logger = logger,
+        lockManager = lockManager,
         scope = backgroundScope,
     )
 
@@ -135,6 +140,36 @@ class AutoRestoreTest {
 
         assertThat(auto.state.value).isNull()
         assertThat(settings.settings.first().driveEnabled).isFalse()
+    }
+
+    @Test
+    fun lockedNotesWaitForThePinAndTheBannerStays() = runTest {
+        val sourceLock = LockManager(InMemoryPreferencesDataStore(), FakeKeyWrapper(), clock = { 1L }, LockConfig(1_000, 1_000))
+        sourceLock.setPin("2468")
+        val sourceNotes = NoteRepository(source, clock = { 1L }, io = Dispatchers.Unconfined)
+        sourceNotes.create("", "açık")
+        val secret = sourceNotes.create("", "kilitli")
+        sourceNotes.setLocked(listOf(secret), true)
+        drive.files["musvedde-backup-2026-01-01.zip"] =
+            ByteArrayOutputStream().also { BackupSerializer(source, { 1L }, sourceLock).write(it) }.toByteArray()
+        val auto = autoRestore()
+
+        auto.runOnFirstLaunch()
+        advanceTimeBy(60_000)
+        runCurrent()
+
+        val waiting = auto.state.value as AutoRestoreState.Done
+        assertThat(waiting.noteCount).isEqualTo(1)
+        assertThat(waiting.lockedPending).isEqualTo(1)
+        assertThat(auto.unlockPending("1111")).isFalse()
+        assertThat((auto.state.value as AutoRestoreState.Done).wrongPin).isTrue()
+
+        assertThat(auto.unlockPending("2468")).isTrue()
+        val done = auto.state.value as AutoRestoreState.Done
+        assertThat(done.noteCount).isEqualTo(2)
+        assertThat(done.lockedPending).isEqualTo(0)
+        assertThat(db.noteDao().count()).isEqualTo(2)
+        assertThat(lockManager.hasPin.first()).isTrue()
     }
 
     @Test

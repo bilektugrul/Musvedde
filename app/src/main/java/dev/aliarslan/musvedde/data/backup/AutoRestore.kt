@@ -2,6 +2,7 @@ package dev.aliarslan.musvedde.data.backup
 
 import dev.aliarslan.musvedde.core.ErrorLogger
 import dev.aliarslan.musvedde.data.db.MusveddeDatabase
+import dev.aliarslan.musvedde.data.lock.LockManager
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +30,14 @@ interface SilentBackupSource {
 sealed interface AutoRestoreState {
     data class Downloading(val bytesRead: Long, val totalBytes: Long) : AutoRestoreState
     data object Restoring : AutoRestoreState
-    data class Done(val noteCount: Int, val backupName: String, val backupTime: Long) : AutoRestoreState
+    /** [lockedPending] locked notes are still in the backup and come back once its PIN is entered. */
+    data class Done(
+        val noteCount: Int,
+        val backupName: String,
+        val backupTime: Long,
+        val lockedPending: Int = 0,
+        val wrongPin: Boolean = false,
+    ) : AutoRestoreState
     data object Failed : AutoRestoreState
 }
 
@@ -42,13 +50,37 @@ class AutoRestore @Inject constructor(
     private val serializer: BackupSerializer,
     private val restoreService: RestoreService,
     private val logger: ErrorLogger,
+    private val lockManager: LockManager,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow<AutoRestoreState?>(null)
     val state: StateFlow<AutoRestoreState?> = _state.asStateFlow()
 
+    private var pendingVault: BackupContent? = null
+
     fun dismiss() {
+        pendingVault = null
         _state.value = null
+    }
+
+    /** Restores the locked notes held back on first launch; returns false when [pin] does not open them. */
+    suspend fun unlockPending(pin: String): Boolean {
+        val vault = pendingVault ?: return true
+        val done = _state.value as? AutoRestoreState.Done ?: return true
+        val result = restoreService.restore(vault, RestoreMode.MERGE, pin)
+        result.exceptionOrNull()?.let { error ->
+            if (error is WrongBackupPinException) {
+                _state.value = done.copy(wrongPin = true)
+                return false
+            }
+            logger.error("Drive", "Restoring locked notes failed: ${error.message}", error)
+            finish(AutoRestoreState.Failed)
+            return true
+        }
+        pendingVault = null
+        if (!lockManager.hasPin.first()) lockManager.setPin(pin)
+        finish(done.copy(noteCount = done.noteCount + result.getOrThrow(), lockedPending = 0, wrongPin = false))
+        return true
     }
 
     suspend fun runOnFirstLaunch() {
@@ -70,13 +102,14 @@ class AutoRestore @Inject constructor(
                 withContext(Dispatchers.IO) { serializer.read(counting) }
             }
             _state.value = AutoRestoreState.Restoring
-            restoreService.restore(content, RestoreMode.MERGE).getOrThrow()
+            if (content.vault != null) pendingVault = content.copy(labels = emptyList(), notes = emptyList())
+            restoreService.restore(content.copy(vault = null), RestoreMode.MERGE).getOrThrow() to content.manifest.lockedNoteCount
         }
         result
-            .onSuccess { count ->
+            .onSuccess { (count, locked) ->
                 settings.update { it.copy(driveEnabled = true, lastDriveBackupError = null) }
                 logger.info("Drive", "Restored $count notes from ${latest.name}")
-                finish(AutoRestoreState.Done(count, latest.name, latest.modifiedAt))
+                finish(AutoRestoreState.Done(count, latest.name, latest.modifiedAt, lockedPending = if (pendingVault != null) locked.coerceAtLeast(1) else 0))
             }
             .onFailure {
                 logger.error("Drive", "Restoring the latest backup failed: ${it.message}", it)
@@ -86,6 +119,7 @@ class AutoRestore @Inject constructor(
 
     private fun finish(final: AutoRestoreState) {
         _state.value = final
+        if (final is AutoRestoreState.Done && final.lockedPending > 0) return
         scope.launch {
             delay(HIDE_AFTER_MILLIS)
             _state.compareAndSet(final, null)

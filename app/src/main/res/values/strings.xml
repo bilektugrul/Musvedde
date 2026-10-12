@@ -354,4 +354,9 @@
     <string name="restore_pin_title">PIN for locked notes</string>
     <string name="restore_pin_message">This backup has locked notes. Enter the PIN that was set when the backup was made.</string>
     <string name="restore_pin_wrong">That PIN does not open this backup</string>
+    <plurals name="auto_restore_locked_pending">
+        <item quantity="one">1 locked note needs the backup\'s PIN</item>
+        <item quantity="other">%d locked notes need the backup\'s PIN</item>
+    </plurals>
+    <string name="auto_restore_enter_pin">Enter PIN</string>
 </resources>

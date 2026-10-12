@@ -72,6 +72,7 @@ import dev.aliarslan.musvedde.domain.PreviewSize
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
 import dev.aliarslan.musvedde.domain.ThemePalette
+import dev.aliarslan.musvedde.ui.lock.BackupPinDialog
 import dev.aliarslan.musvedde.ui.lock.LockViewModel
 import dev.aliarslan.musvedde.ui.lock.PinSetupDialog
 import dev.aliarslan.musvedde.ui.lock.biometricAvailable
@@ -231,6 +232,10 @@ fun SettingsCategoryScreen(
     }
     if (showRestore) {
         RestoreDialog(viewModel = viewModel, onDismiss = { showRestore = false })
+    }
+    val backupPinRequest by viewModel.backupPinRequest.collectAsStateWithLifecycle()
+    backupPinRequest?.let { wrong ->
+        BackupPinDialog(wrongPin = wrong, onPin = viewModel::restoreWithPin, onDismiss = viewModel::cancelBackupPin)
     }
 }
 

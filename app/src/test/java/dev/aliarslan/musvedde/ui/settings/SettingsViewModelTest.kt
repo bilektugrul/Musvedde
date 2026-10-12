@@ -14,6 +14,12 @@ import dev.aliarslan.musvedde.data.backup.BackupManager
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.backup.BackupSerializer
 import dev.aliarslan.musvedde.data.backup.KeepImporter
+import dev.aliarslan.musvedde.data.backup.RestoreMode
+import dev.aliarslan.musvedde.data.db.noteEntity
+import dev.aliarslan.musvedde.data.lock.FakeKeyWrapper
+import dev.aliarslan.musvedde.data.lock.LockConfig
+import dev.aliarslan.musvedde.data.lock.LockManager
+import dev.aliarslan.musvedde.data.lock.UnlockResult
 import dev.aliarslan.musvedde.data.backup.RecordingLogger
 import dev.aliarslan.musvedde.data.backup.RestoreService
 import dev.aliarslan.musvedde.data.backup.drive.DriveAuth
@@ -58,6 +64,7 @@ class SettingsViewModelTest {
     private lateinit var db: MusveddeDatabase
     private lateinit var workManager: WorkManager
     private val settings = SettingsRepository(InMemoryPreferencesDataStore())
+    private val lockManager = LockManager(InMemoryPreferencesDataStore(), FakeKeyWrapper(), clock = { 1L }, LockConfig(1_000, 1_000))
 
     @Before
     fun setUp() {
@@ -97,6 +104,7 @@ class SettingsViewModelTest {
             ),
             restoreService = RestoreService(db, serializer),
             keepImporter = KeepImporter(clock),
+            lockManager = lockManager,
             driveAuth = DriveAuth(context),
             logger = logger,
             workManager = workManager,
@@ -170,6 +178,36 @@ class SettingsViewModelTest {
 
         assertThat(db.noteDao().count()).isEqualTo(1)
         assertThat(vm.restoring.value).isFalse()
+    }
+
+    @Test
+    fun restoringLockedNotesAsksForTheBackupPinAndAdoptsIt() = runTest(dispatcher) {
+        val export = tmp.newFile("backup.zip")
+        val source = inMemoryDatabase()
+        val sourceLock = LockManager(InMemoryPreferencesDataStore(), FakeKeyWrapper(), clock = { 1L }, LockConfig(1_000, 1_000))
+        sourceLock.setPin("2468")
+        val id = source.noteDao().insert(noteEntity(title = "sır", body = "kilitli"))
+        source.noteDao().setLocked(listOf(id), true)
+        export.outputStream().use { BackupSerializer(source, { 1L }, sourceLock).write(it) }
+        source.close()
+        val vm = viewModel()
+
+        vm.restore(Uri.fromFile(export), RestoreMode.MERGE)
+        awaitRestore(vm)
+        assertThat(vm.backupPinRequest.value).isFalse()
+
+        vm.restoreWithPin("1111")
+        awaitRestore(vm)
+        assertThat(vm.backupPinRequest.value).isTrue()
+        assertThat(db.noteDao().count()).isEqualTo(0)
+
+        vm.restoreWithPin("2468")
+        awaitRestore(vm)
+        assertThat(vm.backupPinRequest.value).isNull()
+        assertThat(db.noteDao().getById(db.noteDao().pageAll(10, 0).single().id)!!.locked).isTrue()
+        assertThat(lockManager.hasPin.first()).isTrue()
+        lockManager.lock()
+        assertThat(lockManager.unlock("2468")).isEqualTo(UnlockResult.Unlocked)
     }
 
     @Test

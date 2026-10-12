@@ -16,7 +16,10 @@ import dev.aliarslan.musvedde.data.backup.BackupFile
 import dev.aliarslan.musvedde.data.backup.BackupManager
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.backup.BackupSerializer
+import dev.aliarslan.musvedde.data.backup.BackupPinRequiredException
 import dev.aliarslan.musvedde.data.backup.KeepImporter
+import dev.aliarslan.musvedde.data.backup.WrongBackupPinException
+import dev.aliarslan.musvedde.data.lock.LockManager
 import dev.aliarslan.musvedde.data.backup.RestoreMode
 import dev.aliarslan.musvedde.data.backup.RestoreService
 import dev.aliarslan.musvedde.data.backup.drive.DriveAuth
@@ -60,6 +63,7 @@ class SettingsViewModel @Inject constructor(
     private val backupManager: BackupManager,
     private val restoreService: RestoreService,
     private val keepImporter: KeepImporter,
+    private val lockManager: LockManager,
     private val driveAuth: DriveAuth,
     private val logger: ErrorLogger,
     workManager: WorkManager,
@@ -78,6 +82,12 @@ class SettingsViewModel @Inject constructor(
 
     private val _restoring = MutableStateFlow(false)
     val restoring: StateFlow<Boolean> = _restoring.asStateFlow()
+
+    /** Set while a backup with locked notes waits for its PIN; true once a wrong PIN was entered. */
+    private val _backupPinRequest = MutableStateFlow<Boolean?>(null)
+    val backupPinRequest: StateFlow<Boolean?> = _backupPinRequest.asStateFlow()
+
+    private var pendingRestore: Pair<RestoreMode, suspend () -> InputStream>? = null
 
     private val eventChannel = Channel<SettingsEvent>(Channel.BUFFERED)
     val events: Flow<SettingsEvent> = eventChannel.receiveAsFlow()
@@ -184,20 +194,47 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun restore(mode: RestoreMode, open: suspend () -> InputStream) {
+    fun restoreWithPin(pin: String) {
+        val (mode, open) = pendingRestore ?: return
+        _backupPinRequest.value = null
+        restore(mode, pin, open)
+    }
+
+    fun cancelBackupPin() {
+        pendingRestore = null
+        _backupPinRequest.value = null
+    }
+
+    private fun restore(mode: RestoreMode, pin: String? = null, open: suspend () -> InputStream) {
         _restoring.value = true
         appScope.launch {
             try {
-                if (mode == RestoreMode.REPLACE) backupManager.safetyBackup()
+                if (mode == RestoreMode.REPLACE && pin == null) backupManager.safetyBackup()
                 val result = runCatching { open() }.fold(
-                    onSuccess = { stream -> stream.use { restoreService.restoreFrom(it, mode) } },
+                    onSuccess = { stream -> stream.use { restoreService.restoreFrom(it, mode, pin) } },
                     onFailure = { Result.failure(it) },
                 )
                 result
-                    .onSuccess { eventChannel.send(SettingsEvent.Restored(it)) }
+                    .onSuccess {
+                        pendingRestore = null
+                        if (pin != null && !lockManager.hasPin.first()) lockManager.setPin(pin)
+                        eventChannel.send(SettingsEvent.Restored(it))
+                    }
                     .onFailure {
-                        logger.error("Restore", "Restore failed: ${it.message}", it)
-                        eventChannel.send(SettingsEvent.RestoreFailed(it.message ?: it.javaClass.simpleName))
+                        when (it) {
+                            is BackupPinRequiredException -> {
+                                pendingRestore = mode to open
+                                _backupPinRequest.value = false
+                            }
+                            is WrongBackupPinException -> {
+                                pendingRestore = mode to open
+                                _backupPinRequest.value = true
+                            }
+                            else -> {
+                                logger.error("Restore", "Restore failed: ${it.message}", it)
+                                eventChannel.send(SettingsEvent.RestoreFailed(it.message ?: it.javaClass.simpleName))
+                            }
+                        }
                     }
             } finally {
                 _restoring.value = false
