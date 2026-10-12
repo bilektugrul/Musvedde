@@ -15,6 +15,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.outlined.Accessibility
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -61,10 +74,42 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
+fun SettingsHomeScreen(
+    onBack: () -> Unit,
+    onCategory: (SettingsCategory) -> Unit,
+    onStorage: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.nav_settings)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+            items(SettingsCategory.entries) { category ->
+                CategoryRow(
+                    icon = category.icon(),
+                    title = stringResource(category.titleRes()),
+                    summary = stringResource(category.summaryRes()),
+                    onClick = { if (category == SettingsCategory.STORAGE) onStorage() else onCategory(category) },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsCategoryScreen(
+    category: SettingsCategory,
     onBack: () -> Unit,
     onErrorLog: () -> Unit,
-    onStorage: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -72,8 +117,10 @@ fun SettingsScreen(
     val restoring by viewModel.restoring.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val context = LocalContext.current
     var showRestore by rememberSaveable { mutableStateOf(false) }
     var showDriveSetup by rememberSaveable { mutableStateOf(false) }
+    var confirmReset by rememberSaveable { mutableStateOf(false) }
 
     val consentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
         viewModel.onDriveConsentResult(it.data)
@@ -99,11 +146,12 @@ fun SettingsScreen(
         }
     }
 
+    val title = stringResource(category.titleRes())
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.nav_settings)) },
+                title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
@@ -114,33 +162,58 @@ fun SettingsScreen(
     ) { padding ->
         val s = settings ?: return@Scaffold
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
-            item { AppearanceSection(s, viewModel::update) }
-            item { AccessibilitySection(s, viewModel::update) }
-            item { EditorSection(s, viewModel::update) }
-            item { NotificationsSection(s, viewModel::update) }
             item {
-                BackupSection(
-                    settings = s,
-                    viewModel = viewModel,
-                    backupRunning = backupRunning,
-                    restoring = restoring,
-                    onRestore = { showRestore = true },
-                    onDriveSetup = { showDriveSetup = true },
-                )
+                when (category) {
+                    SettingsCategory.APPEARANCE -> AppearanceSection(s, viewModel::update)
+                    SettingsCategory.ACCESSIBILITY -> AccessibilitySection(s, viewModel::update)
+                    SettingsCategory.EDITOR -> EditorSection(s, viewModel::update)
+                    SettingsCategory.NOTIFICATIONS -> NotificationsSection(s, viewModel::update)
+                    SettingsCategory.BACKUP -> BackupSection(
+                        settings = s,
+                        viewModel = viewModel,
+                        backupRunning = backupRunning,
+                        restoring = restoring,
+                        onRestore = { showRestore = true },
+                        onDriveSetup = { showDriveSetup = true },
+                    )
+                    SettingsCategory.TROUBLESHOOTING -> {
+                        ActionRow(stringResource(R.string.nav_error_log), stringResource(R.string.settings_error_log_summary), onClick = onErrorLog)
+                        DeveloperSection()
+                    }
+                    SettingsCategory.ABOUT -> AboutSection()
+                    SettingsCategory.STORAGE -> Unit
+                }
             }
-            item {
-                SectionHeader(stringResource(R.string.settings_section_storage))
-                ActionRow(stringResource(R.string.storage_title), stringResource(R.string.settings_storage_summary), onClick = onStorage)
+            if (category.reset(s) != null) {
+                item {
+                    OutlinedButton(
+                        onClick = { confirmReset = true },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 24.dp),
+                    ) {
+                        Icon(Icons.Outlined.RestartAlt, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+                        Text(stringResource(R.string.settings_reset_category))
+                    }
+                }
             }
-            item {
-                SectionHeader(stringResource(R.string.settings_section_troubleshooting))
-                ActionRow(stringResource(R.string.nav_error_log), stringResource(R.string.settings_error_log_summary), onClick = onErrorLog)
-            }
-            item { DeveloperSection() }
-            item { AboutSection() }
         }
     }
 
+    if (confirmReset) {
+        AlertDialog(
+            onDismissRequest = { confirmReset = false },
+            text = { Text(stringResource(R.string.settings_reset_category_confirm, title)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmReset = false
+                    viewModel.resetCategory(category)
+                    if (category == SettingsCategory.APPEARANCE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        context.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.getEmptyLocaleList()
+                    }
+                }) { Text(stringResource(R.string.settings_reset_category)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmReset = false }) { Text(stringResource(android.R.string.cancel)) } },
+        )
+    }
     if (showDriveSetup) {
         DriveSetupDialog(onConnect = viewModel::connectDrive, onDismiss = { showDriveSetup = false })
     }
@@ -149,9 +222,41 @@ fun SettingsScreen(
     }
 }
 
+private fun SettingsCategory.titleRes() = when (this) {
+    SettingsCategory.APPEARANCE -> R.string.settings_section_appearance
+    SettingsCategory.ACCESSIBILITY -> R.string.settings_section_accessibility
+    SettingsCategory.EDITOR -> R.string.settings_section_editor
+    SettingsCategory.NOTIFICATIONS -> R.string.settings_section_notifications
+    SettingsCategory.BACKUP -> R.string.settings_section_backup
+    SettingsCategory.STORAGE -> R.string.settings_section_storage
+    SettingsCategory.TROUBLESHOOTING -> R.string.settings_section_troubleshooting
+    SettingsCategory.ABOUT -> R.string.settings_section_about
+}
+
+private fun SettingsCategory.summaryRes() = when (this) {
+    SettingsCategory.APPEARANCE -> R.string.settings_summary_appearance
+    SettingsCategory.ACCESSIBILITY -> R.string.settings_summary_accessibility
+    SettingsCategory.EDITOR -> R.string.settings_summary_editor
+    SettingsCategory.NOTIFICATIONS -> R.string.settings_summary_notifications
+    SettingsCategory.BACKUP -> R.string.settings_summary_backup
+    SettingsCategory.STORAGE -> R.string.settings_storage_summary
+    SettingsCategory.TROUBLESHOOTING -> R.string.settings_summary_troubleshooting
+    SettingsCategory.ABOUT -> R.string.settings_summary_about
+}
+
+private fun SettingsCategory.icon(): ImageVector = when (this) {
+    SettingsCategory.APPEARANCE -> Icons.Outlined.Palette
+    SettingsCategory.ACCESSIBILITY -> Icons.Outlined.Accessibility
+    SettingsCategory.EDITOR -> Icons.Outlined.EditNote
+    SettingsCategory.NOTIFICATIONS -> Icons.Outlined.Notifications
+    SettingsCategory.BACKUP -> Icons.Outlined.Backup
+    SettingsCategory.STORAGE -> Icons.Outlined.Storage
+    SettingsCategory.TROUBLESHOOTING -> Icons.Outlined.BugReport
+    SettingsCategory.ABOUT -> Icons.Outlined.Info
+}
+
 @Composable
 private fun AppearanceSection(s: Settings, update: ((Settings) -> Settings) -> Unit) {
-    SectionHeader(stringResource(R.string.settings_section_appearance))
     ChoiceRow(
         title = stringResource(R.string.settings_theme),
         options = ThemeMode.entries,
@@ -210,13 +315,13 @@ private fun LanguageRow() {
 
 @Composable
 private fun AccessibilitySection(s: Settings, update: ((Settings) -> Settings) -> Unit) {
-    SectionHeader(stringResource(R.string.settings_section_accessibility))
     SliderRow(
         title = stringResource(R.string.settings_ui_text_size),
         value = s.uiTextScale,
         range = Settings.UI_TEXT_SCALE_RANGE,
         step = 0.05f,
         format = { "${(it * 100).roundToInt()}%" },
+        defaultValue = SettingsCategory.DEFAULTS.uiTextScale,
         onValueChangeFinished = { v -> update { it.copy(uiTextScale = v) } },
     )
     SliderRow(
@@ -225,6 +330,7 @@ private fun AccessibilitySection(s: Settings, update: ((Settings) -> Settings) -
         range = Settings.EDITOR_FONT_SIZE_RANGE,
         step = 1f,
         format = { "${it.roundToInt()} sp" },
+        defaultValue = SettingsCategory.DEFAULTS.editorFontSizeSp,
         onValueChangeFinished = { v -> update { it.copy(editorFontSizeSp = v) } },
     )
     SliderRow(
@@ -233,6 +339,7 @@ private fun AccessibilitySection(s: Settings, update: ((Settings) -> Settings) -
         range = Settings.EDITOR_LINE_HEIGHT_RANGE,
         step = 0.1f,
         format = { "%.1f×".format(it) },
+        defaultValue = SettingsCategory.DEFAULTS.editorLineHeight,
         onValueChangeFinished = { v -> update { it.copy(editorLineHeight = v) } },
     )
     ChoiceRow(
@@ -301,7 +408,6 @@ private fun AccessibilitySection(s: Settings, update: ((Settings) -> Settings) -
 
 @Composable
 private fun EditorSection(s: Settings, update: ((Settings) -> Settings) -> Unit) {
-    SectionHeader(stringResource(R.string.settings_section_editor))
     SwitchRow(stringResource(R.string.settings_always_focus), s.alwaysFocusMode, stringResource(R.string.settings_always_focus_summary)) { v ->
         update { it.copy(alwaysFocusMode = v) }
     }
@@ -310,7 +416,6 @@ private fun EditorSection(s: Settings, update: ((Settings) -> Settings) -> Unit)
 @Composable
 private fun NotificationsSection(s: Settings, update: ((Settings) -> Settings) -> Unit) {
     val context = LocalContext.current
-    SectionHeader(stringResource(R.string.settings_section_notifications))
     SwitchRow(
         stringResource(R.string.settings_restore_dismissed),
         s.restoreDismissedPins,
@@ -339,7 +444,6 @@ private fun BackupSection(
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) viewModel.setBackupFolder(uri)
     }
-    SectionHeader(stringResource(R.string.settings_section_backup))
     val folderName = remember(settings.backupFolderUri) { viewModel.folderName(settings.backupFolderUri) }
     ActionRow(
         stringResource(R.string.backup_folder),
@@ -414,7 +518,6 @@ private fun StatusLine(lastAt: Long?, error: String?, enabled: Boolean) {
 
 @Composable
 private fun AboutSection() {
-    SectionHeader(stringResource(R.string.settings_section_about))
     ActionRow(stringResource(R.string.app_name), stringResource(R.string.about_version, BuildConfig.VERSION_NAME)) {}
     ActionRow(stringResource(R.string.about_license), stringResource(R.string.about_license_summary)) {}
 }

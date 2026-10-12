@@ -122,6 +122,23 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun resettingBackupStopsTheSchedule() = runTest(dispatcher) {
+        val vm = viewModel()
+        vm.update { it.copy(backupFrequency = BackupFrequency.DAILY, backupRetention = 3) }
+        advanceUntilIdle()
+
+        vm.resetCategory(SettingsCategory.BACKUP)
+        advanceUntilIdle()
+
+        val s = settings.settings.first()
+        assertThat(s.backupFrequency).isEqualTo(BackupFrequency.OFF)
+        assertThat(s.backupRetention).isEqualTo(10)
+        val active = workManager.getWorkInfosForUniqueWork(BackupScheduler.PERIODIC).get()
+            .filter { it.state != WorkInfo.State.CANCELLED }
+        assertThat(active).isEmpty()
+    }
+
+    @Test
     fun retentionOptionsAre3_5_10_30() {
         assertThat(viewModel().retentionOptions).containsExactly(3, 5, 10, 30).inOrder()
     }

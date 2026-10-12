@@ -1,6 +1,7 @@
 package dev.aliarslan.musvedde.ui
 
 import androidx.annotation.Keep
+import dev.aliarslan.musvedde.ui.settings.SettingsCategory
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,6 +30,9 @@ data object StorageRoute
 
 @Serializable
 data object SettingsRoute
+
+@Serializable
+data class SettingsCategoryRoute(val category: SettingsCategory)
 
 @Serializable
 data object ErrorLogRoute

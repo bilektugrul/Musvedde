@@ -233,4 +233,14 @@
     </plurals>
     <string name="event_emptied_to_trash">Emptied note moved to trash</string>
     <string name="note_empty">Empty note</string>
+    <string name="settings_summary_appearance">Theme, colors, layout and language</string>
+    <string name="settings_summary_accessibility">Text size, fonts, spacing and motion</string>
+    <string name="settings_summary_editor">Focus mode</string>
+    <string name="settings_summary_notifications">Pinned notes and permission</string>
+    <string name="settings_summary_backup">Backup folder, Google Drive, schedule and restore</string>
+    <string name="settings_summary_troubleshooting">Error log</string>
+    <string name="settings_summary_about">Version and license</string>
+    <string name="settings_reset_category">Reset to defaults</string>
+    <string name="settings_reset_category_confirm">Reset all %1$s settings to their defaults?</string>
+    <string name="settings_reset_value">Default</string>
 </resources>

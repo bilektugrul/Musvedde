@@ -92,6 +92,8 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun resetCategory(category: SettingsCategory) = update { category.reset(it) ?: it }
+
     fun folderName(uri: String?): String? = uri?.let {
         runCatching { DocumentFile.fromTreeUri(context, Uri.parse(it))?.name }.getOrNull()
     }

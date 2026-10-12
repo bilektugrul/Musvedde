@@ -29,7 +29,8 @@ import dev.aliarslan.musvedde.ui.errorlog.ErrorLogScreen
 import dev.aliarslan.musvedde.ui.history.HistoryScreen
 import dev.aliarslan.musvedde.ui.storage.StorageScreen
 import dev.aliarslan.musvedde.ui.notes.NotesScreen
-import dev.aliarslan.musvedde.ui.settings.SettingsScreen
+import dev.aliarslan.musvedde.ui.settings.SettingsCategoryScreen
+import dev.aliarslan.musvedde.ui.settings.SettingsHomeScreen
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -113,10 +114,17 @@ fun MusveddeNavHost(
                 )
             }
             composable<SettingsRoute> {
-                SettingsScreen(
+                SettingsHomeScreen(
+                    onBack = { navController.popBackStack() },
+                    onCategory = { category -> navController.navigate(SettingsCategoryRoute(category)) },
+                    onStorage = { navController.navigate(StorageRoute) },
+                )
+            }
+            composable<SettingsCategoryRoute> { entry ->
+                SettingsCategoryScreen(
+                    category = entry.toRoute<SettingsCategoryRoute>().category,
                     onBack = { navController.popBackStack() },
                     onErrorLog = { navController.navigate(ErrorLogRoute) },
-                    onStorage = { navController.navigate(StorageRoute) },
                 )
             }
             composable<StorageRoute> {
