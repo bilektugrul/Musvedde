@@ -243,4 +243,15 @@
     <string name="settings_reset_category">Reset to defaults</string>
     <string name="settings_reset_category_confirm">Reset all %1$s settings to their defaults?</string>
     <string name="settings_reset_value">Default</string>
+    <string name="storage_sort_size">Size</string>
+    <string name="storage_sort_name">Name</string>
+    <string name="storage_sort_length">Content length</string>
+    <string name="storage_sort_date">Date</string>
+    <string name="storage_sort_descending">Largest first</string>
+    <string name="storage_sort_ascending">Smallest first</string>
+    <string name="storage_sort_newest_first">Newest first</string>
+    <string name="storage_sort_oldest_first">Oldest first</string>
+    <string name="drive_disconnect_title">Disconnect Google Drive?</string>
+    <string name="drive_disconnect_confirm">Automatic backups to Google Drive will stop. Backups already in Drive stay there and can still be restored after you reconnect.</string>
+    <string name="drive_disconnect">Disconnect</string>
 </resources>

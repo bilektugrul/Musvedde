@@ -242,4 +242,15 @@
     <string name="settings_reset_category">Varsayılana döndür</string>
     <string name="settings_reset_category_confirm">%1$s ayarları varsayılana döndürülsün mü?</string>
     <string name="settings_reset_value">Varsayılan</string>
+    <string name="storage_sort_size">Boyut</string>
+    <string name="storage_sort_name">İsim</string>
+    <string name="storage_sort_length">İçerik uzunluğu</string>
+    <string name="storage_sort_date">Tarih</string>
+    <string name="storage_sort_descending">Büyükten küçüğe</string>
+    <string name="storage_sort_ascending">Küçükten büyüğe</string>
+    <string name="storage_sort_newest_first">En yeni önce</string>
+    <string name="storage_sort_oldest_first">En eski önce</string>
+    <string name="drive_disconnect_title">Google Drive bağlantısı kesilsin mi?</string>
+    <string name="drive_disconnect_confirm">Google Drive\'a otomatik yedekleme durur. Drive\'daki mevcut yedekler orada kalır; yeniden bağlandığında geri yükleyebilirsin.</string>
+    <string name="drive_disconnect">Bağlantıyı kes</string>
 </resources>

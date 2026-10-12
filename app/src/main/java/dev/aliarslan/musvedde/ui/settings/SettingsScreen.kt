@@ -451,12 +451,27 @@ private fun BackupSection(
     ) { folderPicker.launch(null) }
     StatusLine(settings.lastFolderBackupAt, settings.lastFolderBackupError, settings.backupFolderUri != null)
 
+    var confirmDisconnect by rememberSaveable { mutableStateOf(false) }
     if (settings.driveEnabled) {
-        ActionRow(stringResource(R.string.backup_drive), stringResource(R.string.backup_drive_disconnect)) { viewModel.disconnectDrive() }
+        ActionRow(stringResource(R.string.backup_drive), stringResource(R.string.backup_drive_disconnect)) { confirmDisconnect = true }
     } else {
         ActionRow(stringResource(R.string.backup_drive), stringResource(R.string.backup_drive_connect)) { viewModel.connectDrive() }
     }
     ActionRow(stringResource(R.string.drive_setup_title), stringResource(R.string.drive_setup_summary), onClick = onDriveSetup)
+    if (confirmDisconnect) {
+        AlertDialog(
+            onDismissRequest = { confirmDisconnect = false },
+            title = { Text(stringResource(R.string.drive_disconnect_title)) },
+            text = { Text(stringResource(R.string.drive_disconnect_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDisconnect = false
+                    viewModel.disconnectDrive()
+                }) { Text(stringResource(R.string.drive_disconnect)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDisconnect = false }) { Text(stringResource(android.R.string.cancel)) } },
+        )
+    }
     StatusLine(settings.lastDriveBackupAt, settings.lastDriveBackupError, settings.driveEnabled)
 
     ChoiceRow(
