@@ -14,6 +14,7 @@ import dev.aliarslan.musvedde.data.backup.AutoRestore
 import dev.aliarslan.musvedde.data.errorlog.CrashRecorder
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.errorlog.ErrorLogRepository
+import dev.aliarslan.musvedde.data.lock.LockManager
 import dev.aliarslan.musvedde.data.note.OpenNoteTracker
 import dev.aliarslan.musvedde.data.note.TrashPurgeWorker
 import dev.aliarslan.musvedde.data.note.VersionRepository
@@ -60,6 +61,9 @@ class MusveddeApp : Application(), Configuration.Provider {
     @Inject
     lateinit var autoRestore: Lazy<AutoRestore>
 
+    @Inject
+    lateinit var lockManager: LockManager
+
     override fun onCreate() {
         CrashRecorder(CoreModule.pendingCrashFile(this), Clock.System).install()
         super.onCreate()
@@ -69,7 +73,10 @@ class MusveddeApp : Application(), Configuration.Provider {
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) = openNotes.setForeground(true)
-                override fun onStop(owner: LifecycleOwner) = openNotes.setForeground(false)
+                override fun onStop(owner: LifecycleOwner) {
+                    openNotes.setForeground(false)
+                    lockManager.lock()
+                }
             },
         )
         pinnedNoteNotifier.start(appScope)
