@@ -26,6 +26,7 @@ enum class SettingsCategory {
                 themePalette = d.themePalette,
                 paletteStyle = d.paletteStyle,
                 contrast = d.contrast,
+                monet = d.monet,
                 listLayout = d.listLayout,
             )
             ACCESSIBILITY -> settings.copy(

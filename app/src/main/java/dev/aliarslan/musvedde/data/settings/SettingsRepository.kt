@@ -17,6 +17,7 @@ import dev.aliarslan.musvedde.domain.ThemePalette
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.ListLayout
+import dev.aliarslan.musvedde.domain.MonetTuning
 import dev.aliarslan.musvedde.domain.PreviewSize
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
@@ -42,6 +43,13 @@ class SettingsRepository @Inject constructor(
         val themePalette = stringPreferencesKey("themePalette")
         val paletteStyle = stringPreferencesKey("paletteStyle")
         val contrast = stringPreferencesKey("contrast")
+        val monetAccent = intPreferencesKey("monetAccent")
+        val monetCustomBackground = booleanPreferencesKey("monetCustomBackground")
+        val monetBackground = intPreferencesKey("monetBackground")
+        val monetLuminance = intPreferencesKey("monetLuminance")
+        val monetChroma = intPreferencesKey("monetChroma")
+        val monetWholePalette = booleanPreferencesKey("monetWholePalette")
+        val monetTintedBackground = booleanPreferencesKey("monetTintedBackground")
         val listLayout = stringPreferencesKey("listLayout")
         val uiTextScale = floatPreferencesKey("uiTextScale")
         val editorFontSizeSp = floatPreferencesKey("editorFontSizeSp")
@@ -75,6 +83,15 @@ class SettingsRepository @Inject constructor(
                 ?: if (this[Keys.legacyDynamicColor] == false) ThemePalette.PAPER else d.themePalette,
             paletteStyle = enumOr(this[Keys.paletteStyle], d.paletteStyle),
             contrast = enumOr(this[Keys.contrast], d.contrast),
+            monet = MonetTuning(
+                accentColor = this[Keys.monetAccent] ?: d.monet.accentColor,
+                customBackground = this[Keys.monetCustomBackground] ?: d.monet.customBackground,
+                backgroundColor = this[Keys.monetBackground] ?: d.monet.backgroundColor,
+                luminance = this[Keys.monetLuminance] ?: d.monet.luminance,
+                chroma = this[Keys.monetChroma] ?: d.monet.chroma,
+                wholePalette = this[Keys.monetWholePalette] ?: d.monet.wholePalette,
+                tintedBackground = this[Keys.monetTintedBackground] ?: d.monet.tintedBackground,
+            ),
             listLayout = enumOr(this[Keys.listLayout], d.listLayout),
             uiTextScale = this[Keys.uiTextScale] ?: d.uiTextScale,
             editorFontSizeSp = this[Keys.editorFontSizeSp] ?: d.editorFontSizeSp,
@@ -106,6 +123,13 @@ class SettingsRepository @Inject constructor(
         this[Keys.themePalette] = s.themePalette.name
         this[Keys.paletteStyle] = s.paletteStyle.name
         this[Keys.contrast] = s.contrast.name
+        this[Keys.monetAccent] = s.monet.accentColor
+        this[Keys.monetCustomBackground] = s.monet.customBackground
+        this[Keys.monetBackground] = s.monet.backgroundColor
+        this[Keys.monetLuminance] = s.monet.luminance
+        this[Keys.monetChroma] = s.monet.chroma
+        this[Keys.monetWholePalette] = s.monet.wholePalette
+        this[Keys.monetTintedBackground] = s.monet.tintedBackground
         this[Keys.listLayout] = s.listLayout.name
         this[Keys.uiTextScale] = s.uiTextScale
         this[Keys.editorFontSizeSp] = s.editorFontSizeSp

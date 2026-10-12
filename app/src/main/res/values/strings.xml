@@ -104,6 +104,7 @@
     <string name="settings_palette_style">Palette style</string>
     <string name="settings_contrast">Contrast</string>
     <string name="palette_wallpaper">From wallpaper</string>
+    <string name="palette_custom">Custom color</string>
     <string name="palette_paper">Paper</string>
     <string name="palette_ocean">Ocean</string>
     <string name="palette_forest">Forest</string>

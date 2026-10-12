@@ -2,9 +2,10 @@ package dev.aliarslan.musvedde.domain
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
 
-/** Where the app's colors come from: the wallpaper (Monet) or a fixed seed color. */
+/** Where the app's colors come from: the wallpaper (Monet), a fixed seed color or the user's own accent color. */
 enum class ThemePalette(val seed: Long?) {
     WALLPAPER(null),
+    CUSTOM(null),
     PAPER(0xFF6E5530),
     OCEAN(0xFF1E6FB5),
     FOREST(0xFF2E7D4F),
@@ -17,6 +18,30 @@ enum class ThemePalette(val seed: Long?) {
 enum class PaletteStyleOption { TONAL_SPOT, VIBRANT, EXPRESSIVE, RAINBOW, FRUIT_SALAD, NEUTRAL, MONOCHROME, FIDELITY, CONTENT }
 
 enum class ContrastLevel(val value: Double) { STANDARD(0.0), MEDIUM(0.5), HIGH(1.0) }
+
+/**
+ * Fine tuning on top of the generated palette, like the Monet settings of custom ROMs. [luminance] and [chroma]
+ * are percentages from -100 to 100; [wholePalette] lets them reach the background colors too.
+ */
+data class MonetTuning(
+    val accentColor: Int = DEFAULT_ACCENT,
+    val customBackground: Boolean = false,
+    val backgroundColor: Int = DEFAULT_BACKGROUND,
+    val luminance: Int = 0,
+    val chroma: Int = 0,
+    val wholePalette: Boolean = false,
+    val tintedBackground: Boolean = true,
+) {
+    val changesScheme: Boolean get() = customBackground || luminance != 0 || chroma != 0 || !tintedBackground
+
+    fun sanitized() = copy(luminance = luminance.coerceIn(RANGE), chroma = chroma.coerceIn(RANGE))
+
+    companion object {
+        const val DEFAULT_ACCENT = 0xFF0DD6D1.toInt()
+        const val DEFAULT_BACKGROUND = 0xFFC8A165.toInt()
+        val RANGE = -100..100
+    }
+}
 
 enum class ListLayout { GRID, LIST }
 
@@ -35,6 +60,7 @@ data class Settings(
     val themePalette: ThemePalette = ThemePalette.WALLPAPER,
     val paletteStyle: PaletteStyleOption = PaletteStyleOption.TONAL_SPOT,
     val contrast: ContrastLevel = ContrastLevel.STANDARD,
+    val monet: MonetTuning = MonetTuning(),
     val listLayout: ListLayout = ListLayout.GRID,
     val uiTextScale: Float = 1.0f,
     val editorFontSizeSp: Float = 18f,
@@ -64,6 +90,7 @@ data class Settings(
         editorFontSizeSp = editorFontSizeSp.coerceIn(EDITOR_FONT_SIZE_RANGE),
         editorLineHeight = editorLineHeight.coerceIn(EDITOR_LINE_HEIGHT_RANGE),
         backupRetention = backupRetention.takeIf { it in RETENTION_OPTIONS } ?: DEFAULT_RETENTION,
+        monet = monet.sanitized(),
     )
 
     companion object {

@@ -115,8 +115,8 @@ fun MusveddeTheme(settings: Settings, content: @Composable () -> Unit) {
         null
     }
     val wallpaperSeed = remember(wantsWallpaper) { if (wantsWallpaper) wallpaperSeedColor(context) else null }
-    val scheme = remember(settings.themeMode, settings.themePalette, settings.paletteStyle, settings.contrast, dark, systemDynamic, wallpaperSeed) {
-        val base = buildColorScheme(settings.themePalette, settings.paletteStyle, settings.contrast, dark, wallpaperSeed, systemDynamic)
+    val scheme = remember(settings.themeMode, settings.themePalette, settings.paletteStyle, settings.contrast, settings.monet, dark, systemDynamic, wallpaperSeed) {
+        val base = buildColorScheme(settings.themePalette, settings.paletteStyle, settings.contrast, dark, wallpaperSeed, systemDynamic, settings.monet)
         colorSchemeFor(settings.themeMode, systemDark, base)
     }
 

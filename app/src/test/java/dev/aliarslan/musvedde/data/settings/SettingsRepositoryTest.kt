@@ -5,6 +5,7 @@ import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.Settings
+import dev.aliarslan.musvedde.domain.MonetTuning
 import dev.aliarslan.musvedde.domain.ThemeMode
 import dev.aliarslan.musvedde.domain.ThemePalette
 import kotlinx.coroutines.flow.first
@@ -69,5 +70,25 @@ class SettingsRepositoryTest {
         assertThat(settings.editorLineHeight).isEqualTo(1.2f)
         assertThat(settings.uiTextScale).isEqualTo(1.5f)
         assertThat(settings.backupRetention).isEqualTo(10)
+    }
+
+    @Test
+    fun monetTuningRoundTripsAndIsClamped() = runTest {
+        val repository = repository()
+        val tuning = MonetTuning(
+            accentColor = 0xFF0DD6D1.toInt(),
+            customBackground = true,
+            backgroundColor = 0xFFFFC90F.toInt(),
+            luminance = 250,
+            chroma = -40,
+            wholePalette = true,
+            tintedBackground = false,
+        )
+
+        repository.update { it.copy(themePalette = ThemePalette.CUSTOM, monet = tuning) }
+
+        val settings = repository.settings.first()
+        assertThat(settings.themePalette).isEqualTo(ThemePalette.CUSTOM)
+        assertThat(settings.monet).isEqualTo(tuning.copy(luminance = 100))
     }
 }

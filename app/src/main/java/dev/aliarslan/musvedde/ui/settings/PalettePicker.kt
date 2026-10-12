@@ -86,6 +86,7 @@ private fun Swatch(palette: ThemePalette, selected: Boolean, label: String, onCl
 fun paletteLabel(palette: ThemePalette): String = stringResource(
     when (palette) {
         ThemePalette.WALLPAPER -> R.string.palette_wallpaper
+        ThemePalette.CUSTOM -> R.string.palette_custom
         ThemePalette.PAPER -> R.string.palette_paper
         ThemePalette.OCEAN -> R.string.palette_ocean
         ThemePalette.FOREST -> R.string.palette_forest

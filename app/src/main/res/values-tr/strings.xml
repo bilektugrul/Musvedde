@@ -103,6 +103,7 @@
     <string name="settings_palette_style">Palet stili</string>
     <string name="settings_contrast">Kontrast</string>
     <string name="palette_wallpaper">Duvar kâğıdından</string>
+    <string name="palette_custom">Özel renk</string>
     <string name="palette_paper">Kâğıt</string>
     <string name="palette_ocean">Okyanus</string>
     <string name="palette_forest">Orman</string>

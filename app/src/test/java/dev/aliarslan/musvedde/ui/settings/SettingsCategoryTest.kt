@@ -8,6 +8,7 @@ import dev.aliarslan.musvedde.domain.PaletteStyleOption
 import dev.aliarslan.musvedde.domain.ThemePalette
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.ListLayout
+import dev.aliarslan.musvedde.domain.MonetTuning
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
 import org.junit.Test
@@ -18,6 +19,7 @@ class SettingsCategoryTest {
         themePalette = ThemePalette.OCEAN,
         paletteStyle = PaletteStyleOption.VIBRANT,
         contrast = ContrastLevel.HIGH,
+        monet = MonetTuning(luminance = 40, tintedBackground = false),
         listLayout = ListLayout.LIST,
         uiTextScale = 1.3f,
         editorFontSizeSp = 26f,
@@ -54,6 +56,7 @@ class SettingsCategoryTest {
         assertThat(reset.themePalette).isEqualTo(ThemePalette.WALLPAPER)
         assertThat(reset.paletteStyle).isEqualTo(PaletteStyleOption.TONAL_SPOT)
         assertThat(reset.contrast).isEqualTo(ContrastLevel.STANDARD)
+        assertThat(reset.monet).isEqualTo(MonetTuning())
         assertThat(reset.listLayout).isEqualTo(ListLayout.GRID)
         assertThat(reset.editorFontSizeSp).isEqualTo(26f)
     }
