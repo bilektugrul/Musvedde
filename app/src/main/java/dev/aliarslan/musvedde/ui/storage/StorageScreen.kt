@@ -52,10 +52,12 @@ import dev.aliarslan.musvedde.data.db.NoteStorageRow
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.storage.StorageReport
 import dev.aliarslan.musvedde.data.storage.StorageRepository
+import dev.aliarslan.musvedde.data.lock.LockManager
 import dev.aliarslan.musvedde.domain.NoteState
 import dev.aliarslan.musvedde.ui.notes.ConfirmDialog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -63,18 +65,23 @@ import javax.inject.Inject
 class StorageViewModel @Inject constructor(
     private val storage: StorageRepository,
     private val versions: VersionRepository,
+    private val lockManager: LockManager,
 ) : ViewModel() {
     private val _report = MutableStateFlow<StorageReport?>(null)
     val report = _report.asStateFlow()
 
+    init {
+        viewModelScope.launch { lockManager.unlocked.drop(1).collect { refresh() } }
+    }
+
     fun refresh() {
-        viewModelScope.launch { _report.value = storage.report() }
+        viewModelScope.launch { _report.value = storage.report(lockManager.unlocked.value) }
     }
 
     fun clearAllHistory() {
         viewModelScope.launch {
             versions.clearAll()
-            _report.value = storage.report()
+            _report.value = storage.report(lockManager.unlocked.value)
         }
     }
 }
@@ -187,7 +194,7 @@ private fun SummaryLine(label: String, value: String) {
 @Composable
 private fun NoteRow(row: NoteStorageRow, onClick: () -> Unit) {
     val context = LocalContext.current
-    val name = row.displayName(stringResource(R.string.notification_untitled))
+    val name = row.displayName(stringResource(if (row.locked) R.string.note_locked else R.string.notification_untitled))
     val stateLabel = when (row.state) {
         NoteState.ARCHIVED.name -> stringResource(R.string.nav_archive)
         NoteState.TRASHED.name -> stringResource(R.string.nav_trash)

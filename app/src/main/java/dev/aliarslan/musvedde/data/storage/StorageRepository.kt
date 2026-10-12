@@ -32,8 +32,9 @@ class StorageRepository @Inject constructor(
     @param:Named(BackupManager.SAFETY_DIR) private val safetyBackupDir: File,
     @param:IoDispatcher private val io: CoroutineDispatcher,
 ) {
-    suspend fun report(): StorageReport = withContext(io) {
-        val rows = db.noteDao().storageRows()
+    /** Locked notes are listed by size only, without their title or text, unless [unlocked]. */
+    suspend fun report(unlocked: Boolean = false): StorageReport = withContext(io) {
+        val rows = db.noteDao().storageRows().map { if (it.locked && !unlocked) it.copy(title = "", preview = "") else it }
         val versions = db.noteVersionDao().totals()
         StorageReport(
             databaseBytes = databaseFiles.files().sumOf { if (it.isFile) it.length() else 0L },

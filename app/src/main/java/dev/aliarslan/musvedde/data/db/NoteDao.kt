@@ -170,7 +170,8 @@ interface NoteDao {
         SELECT n.id, n.title, substr(n.body, 1, 120) AS preview, n.state,
             length(CAST(n.title AS BLOB)) + length(CAST(n.body AS BLOB)) AS noteBytes,
             COUNT(v.id) AS versionCount, COALESCE(SUM(v.sizeBytes), 0) AS versionBytes,
-            length(n.title) + length(n.body) AS contentLength, n.createdAt
+            length(n.title) + length(n.body) AS contentLength, n.createdAt,
+            (n.locked OR $IN_LOCKED_FOLDER) AS locked
         FROM notes n LEFT JOIN note_versions v ON v.noteId = n.id
         GROUP BY n.id
         ORDER BY noteBytes + versionBytes DESC, n.id

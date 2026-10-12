@@ -2,6 +2,7 @@ package dev.aliarslan.musvedde.data.storage
 
 import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
+import dev.aliarslan.musvedde.data.db.noteEntity
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,19 @@ class StorageRepositoryTest {
 
     @After
     fun tearDown() = db.close()
+
+    @Test
+    fun lockedNotesAreListedWithoutTheirText() = runTest {
+        val id = db.noteDao().insert(noteEntity(title = "gizli", body = "sır"))
+        db.noteDao().setLocked(listOf(id), true)
+
+        val masked = repository().report().notes.single()
+        assertThat(masked.locked).isTrue()
+        assertThat(masked.title).isEmpty()
+        assertThat(masked.preview).isEmpty()
+        assertThat(masked.noteBytes).isGreaterThan(0)
+        assertThat(repository().report(unlocked = true).notes.single().title).isEqualTo("gizli")
+    }
 
     private fun repository() = StorageRepository(
         db = db,
