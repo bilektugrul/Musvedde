@@ -12,15 +12,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.RestoreFromTrash
 import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material.icons.outlined.ViewAgenda
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -112,7 +124,13 @@ fun SelectionTopBar(
     onTrash: () -> Unit,
     onRestore: () -> Unit,
     onDeleteForever: () -> Unit,
+    onMoveToFolder: () -> Unit = {},
+    selectionHidden: Boolean = false,
+    onToggleHidden: () -> Unit = {},
+    selectionLocked: Boolean = false,
+    onToggleLocked: () -> Unit = {},
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         navigationIcon = {
@@ -151,6 +169,39 @@ fun SelectionTopBar(
             }
             IconButton(onClick = onTrash) {
                 Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_trash))
+            }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_move_to_folder)) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Outlined.DriveFileMove, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onMoveToFolder()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (selectionHidden) R.string.action_show_on_main else R.string.action_hide_from_main)) },
+                        leadingIcon = {
+                            Icon(if (selectionHidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null)
+                        },
+                        onClick = {
+                            menuOpen = false
+                            onToggleHidden()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (selectionLocked) R.string.action_unlock_note else R.string.action_lock_note)) },
+                        leadingIcon = { Icon(if (selectionLocked) Icons.Outlined.LockOpen else Icons.Outlined.Lock, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onToggleLocked()
+                        },
+                    )
+                }
             }
         },
     )

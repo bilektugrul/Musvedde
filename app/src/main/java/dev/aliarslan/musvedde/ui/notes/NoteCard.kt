@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -76,13 +78,24 @@ fun NoteCard(
             }
             if (note.title.isBlank() && note.preview.isBlank()) {
                 Text(
-                    stringResource(R.string.note_empty),
+                    stringResource(if (note.locked) R.string.note_locked else R.string.note_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                 )
             }
-            if (note.labelIds.isNotEmpty() || note.pinnedToNotification) {
+            if (note.labelIds.isNotEmpty() || note.pinnedToNotification || note.locked || note.hidden) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (note.locked) {
+                        Icon(Icons.Outlined.Lock, contentDescription = stringResource(R.string.note_locked), modifier = Modifier.size(16.dp), tint = textColor)
+                    }
+                    if (note.hidden) {
+                        Icon(
+                            Icons.Outlined.VisibilityOff,
+                            contentDescription = stringResource(R.string.note_hidden),
+                            modifier = Modifier.size(16.dp),
+                            tint = textColor,
+                        )
+                    }
                     if (note.pinnedToNotification) {
                         Icon(
                             Icons.Outlined.NotificationsActive,

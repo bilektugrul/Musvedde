@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.domain.NoteVersion
@@ -46,10 +47,15 @@ sealed interface HistoryEvent {
 class HistoryViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val versions: VersionRepository,
+    notes: NoteRepository,
     @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val noteId: Long = savedStateHandle.get<Long>("noteId") ?: 0L
+
+    /** Null until known; history of a locked note stays behind the PIN like the note itself. */
+    val locked: StateFlow<Boolean?> = notes.observeIsLocked(noteId)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private val selectedId = MutableStateFlow<Long?>(null)
 
     private val items = versions.observe(noteId)

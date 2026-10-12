@@ -123,7 +123,7 @@ fun LabelPickerSheet(
 }
 
 @Composable
-fun NewLabelField(onCreate: (String) -> Unit, modifier: Modifier = Modifier) {
+fun NewLabelField(onCreate: (String) -> Unit, modifier: Modifier = Modifier, hint: String = stringResource(R.string.label_new_hint)) {
     var name by rememberSaveable { mutableStateOf("") }
     val submit = {
         if (name.isNotBlank()) {
@@ -136,7 +136,7 @@ fun NewLabelField(onCreate: (String) -> Unit, modifier: Modifier = Modifier) {
             value = name,
             onValueChange = { name = it },
             singleLine = true,
-            placeholder = { Text(stringResource(R.string.label_new_hint)) },
+            placeholder = { Text(hint) },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
             modifier = Modifier.weight(1f),

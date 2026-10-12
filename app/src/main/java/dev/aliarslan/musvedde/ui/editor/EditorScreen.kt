@@ -6,7 +6,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import android.provider.Settings
@@ -112,6 +117,9 @@ import dev.aliarslan.musvedde.domain.NoteState
 import dev.aliarslan.musvedde.domain.Settings as AppSettings
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 import dev.aliarslan.musvedde.ui.theme.fontFamily
+import dev.aliarslan.musvedde.ui.folders.FolderPickerSheet
+import dev.aliarslan.musvedde.ui.lock.LockGate
+import dev.aliarslan.musvedde.ui.lock.rememberRequireUnlock
 import dev.aliarslan.musvedde.ui.theme.noteContainerColor
 
 @Composable
@@ -141,6 +149,9 @@ fun EditorScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by viewModel.editorSettings.collectAsStateWithLifecycle()
     val labels by viewModel.allLabels.collectAsStateWithLifecycle()
+    val folders by viewModel.allFolders.collectAsStateWithLifecycle()
+    val contentLocked by viewModel.contentLocked.collectAsStateWithLifecycle()
+    val requireUnlock = rememberRequireUnlock()
 
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.reloadIfChanged() }
@@ -152,6 +163,7 @@ fun EditorScreen(
     LaunchedEffect(settings.alwaysFocusMode) { if (settings.alwaysFocusMode) focusMode = true }
     var showColors by rememberSaveable { mutableStateOf(false) }
     var showLabels by rememberSaveable { mutableStateOf(false) }
+    var showFolders by rememberSaveable { mutableStateOf(false) }
 
     FocusModeEffect(focusMode)
     BackHandler(enabled = focusMode) { focusMode = false }
@@ -162,77 +174,97 @@ fun EditorScreen(
     val noteColor = noteContainerColor(state.color, appearance.dark, appearance.amoled)
     val background = if (noteColor == Color.Unspecified) MaterialTheme.colorScheme.background else noteColor
 
-    Scaffold(
-        containerColor = background,
-        snackbarHost = { SnackbarHost(snackbar) },
-        topBar = {
-            AnimatedVisibility(visible = !focusMode, enter = barEnter, exit = barExit) {
-                EditorTopBar(
-                    state = state,
-                    background = background,
-                    onBack = onBack,
-                    onTogglePin = viewModel::togglePinnedToTop,
-                    onToggleNotification = {
-                        if (state.pinnedToNotification) {
-                            viewModel.setPinnedToNotification(false)
-                        } else {
-                            requestNotificationPermission { viewModel.setPinnedToNotification(true) }
-                        }
-                    },
-                    onArchive = viewModel::archive,
-                    onOpenHistory = openHistory,
-                )
-            }
-        },
-        bottomBar = {
-            AnimatedVisibility(visible = !focusMode, enter = barEnter, exit = barExit) {
-                EditorBottomBar(
-                    background = background,
-                    title = viewModel.title,
-                    body = viewModel.body,
-                    onColors = { showColors = true },
-                    onLabels = { showLabels = true },
-                    onFocus = { focusMode = true },
-                    onTrash = viewModel::trash,
-                )
-            }
-        },
-    ) { padding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .imePadding(),
-        ) {
-            if (state.loaded) {
-                EditorFields(
-                    title = viewModel.title,
-                    body = viewModel.body,
-                    settings = settings,
-                    focusMode = focusMode,
-                    autoFocusBody = viewModel.isNewNote,
-                    updatedAt = state.updatedAt,
-                    onOpenHistory = openHistory,
-                    onFontSizeCommitted = viewModel::setFontSize,
-                )
-            }
-            if (focusMode) {
-                IconButton(
-                    onClick = { focusMode = false },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .safeDrawingPadding(),
-                ) {
-                    Icon(
-                        Icons.Outlined.CloseFullscreen,
-                        contentDescription = stringResource(R.string.editor_exit_focus),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+    LockGate(locked = contentLocked, modifier = Modifier.background(background)) {
+        Scaffold(
+            containerColor = background,
+            snackbarHost = { SnackbarHost(snackbar) },
+            topBar = {
+                AnimatedVisibility(visible = !focusMode, enter = barEnter, exit = barExit) {
+                    EditorTopBar(
+                        state = state,
+                        background = background,
+                        onBack = onBack,
+                        onTogglePin = viewModel::togglePinnedToTop,
+                        onToggleNotification = {
+                            if (state.pinnedToNotification) {
+                                viewModel.setPinnedToNotification(false)
+                            } else {
+                                requestNotificationPermission { viewModel.setPinnedToNotification(true) }
+                            }
+                        },
+                        onArchive = viewModel::archive,
+                        onOpenHistory = openHistory,
+                        onMoveToFolder = { showFolders = true },
+                        onToggleHidden = viewModel::toggleHidden,
+                        onToggleLocked = { requireUnlock { viewModel.toggleLocked() } },
                     )
+                }
+            },
+            bottomBar = {
+                AnimatedVisibility(visible = !focusMode, enter = barEnter, exit = barExit) {
+                    EditorBottomBar(
+                        background = background,
+                        title = viewModel.title,
+                        body = viewModel.body,
+                        onColors = { showColors = true },
+                        onLabels = { showLabels = true },
+                        onFocus = { focusMode = true },
+                        onTrash = viewModel::trash,
+                    )
+                }
+            },
+        ) { padding ->
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .imePadding(),
+            ) {
+                if (state.loaded) {
+                    EditorFields(
+                        title = viewModel.title,
+                        body = viewModel.body,
+                        settings = settings,
+                        focusMode = focusMode,
+                        autoFocusBody = viewModel.isNewNote,
+                        updatedAt = state.updatedAt,
+                        onOpenHistory = openHistory,
+                        onFontSizeCommitted = viewModel::setFontSize,
+                    )
+                }
+                if (focusMode) {
+                    IconButton(
+                        onClick = { focusMode = false },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .safeDrawingPadding(),
+                    ) {
+                        Icon(
+                            Icons.Outlined.CloseFullscreen,
+                            contentDescription = stringResource(R.string.editor_exit_focus),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                        )
+                    }
                 }
             }
         }
     }
 
+    if (showFolders) {
+        FolderPickerSheet(
+            folders = folders,
+            selected = state.folderId,
+            onSelect = {
+                viewModel.setFolder(it)
+                showFolders = false
+            },
+            onCreate = {
+                viewModel.createFolder(it)
+                showFolders = false
+            },
+            onDismiss = { showFolders = false },
+        )
+    }
     if (showColors) {
         ColorPickerSheet(
             selected = state.color,
@@ -261,6 +293,9 @@ private fun EditorTopBar(
     onToggleNotification: () -> Unit,
     onArchive: () -> Unit,
     onOpenHistory: () -> Unit,
+    onMoveToFolder: () -> Unit,
+    onToggleHidden: () -> Unit,
+    onToggleLocked: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     TopAppBar(
@@ -278,7 +313,7 @@ private fun EditorTopBar(
                     contentDescription = stringResource(if (state.pinnedToTop) R.string.action_unpin else R.string.action_pin),
                 )
             }
-            if (state.state == NoteState.ACTIVE) {
+            if (state.state == NoteState.ACTIVE && !state.locked) {
                 IconButton(onClick = onToggleNotification) {
                     Icon(
                         if (state.pinnedToNotification) Icons.Filled.NotificationsActive else Icons.Outlined.NotificationsNone,
@@ -308,6 +343,30 @@ private fun EditorTopBar(
                         onClick = {
                             menuOpen = false
                             onOpenHistory()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_move_to_folder)) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Outlined.DriveFileMove, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onMoveToFolder()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (state.hidden) R.string.action_show_on_main else R.string.action_hide_from_main)) },
+                        leadingIcon = { Icon(if (state.hidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onToggleHidden()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (state.locked) R.string.action_unlock_note else R.string.action_lock_note)) },
+                        leadingIcon = { Icon(if (state.locked) Icons.Outlined.LockOpen else Icons.Outlined.Lock, contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onToggleLocked()
                         },
                     )
                 }

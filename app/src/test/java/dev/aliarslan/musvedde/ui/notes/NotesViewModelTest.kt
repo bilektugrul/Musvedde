@@ -4,6 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
+import dev.aliarslan.musvedde.data.lock.FakeKeyWrapper
+import dev.aliarslan.musvedde.data.lock.LockConfig
+import dev.aliarslan.musvedde.data.lock.LockManager
+import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteEvent
 import dev.aliarslan.musvedde.data.note.NoteEventBus
@@ -43,6 +47,7 @@ class NotesViewModelTest {
     private lateinit var notes: NoteRepository
     private lateinit var versions: VersionRepository
     private val noteEvents = NoteEventBus()
+    private val lockManager = LockManager(InMemoryPreferencesDataStore(), FakeKeyWrapper(), clock = { 1L }, LockConfig(1_000, 1_000))
 
     @Before
     fun setUp() {
@@ -59,18 +64,88 @@ class NotesViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(section: NotesSection = NotesSection.ACTIVE) = NotesViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("section" to section, "labelId" to -1L)),
+    private fun viewModel(section: NotesSection = NotesSection.ACTIVE, folderId: Long = -1L) = NotesViewModel(
+        savedStateHandle = SavedStateHandle(mapOf("section" to section, "labelId" to -1L, "folderId" to folderId)),
         notes = notes,
         versions = versions,
         noteEvents = noteEvents,
         labels = LabelRepository(db.labelDao(), dispatcher),
         settings = SettingsRepository(InMemoryPreferencesDataStore()),
+        folders = FolderRepository(db, dispatcher),
+        lockManager = lockManager,
         appScope = appScope,
     )
 
     private fun TestScope.collect(vm: NotesViewModel) {
         backgroundScope.launch { vm.uiState.collect {} }
+    }
+
+    @Test
+    fun hidingSelectedNotesTakesThemOffTheMainPageAndBack() = runTest(dispatcher) {
+        val a = notes.create("", "a")
+        val b = notes.create("", "b")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        vm.select(a)
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.selectionHidden).isFalse()
+        vm.toggleHiddenSelected()
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.others.map { it.id }).containsExactly(b)
+
+        vm.setQuery("a")
+        advanceUntilIdle()
+        vm.select(a)
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.selectionHidden).isTrue()
+        vm.toggleHiddenSelected()
+        vm.setQuery("")
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.others.map { it.id }).containsExactly(a, b)
+    }
+
+    @Test
+    fun folderSectionShowsItsNotesAndTheFolder() = runTest(dispatcher) {
+        val folders = FolderRepository(db, dispatcher)
+        val folder = folders.create("Şiirler").getOrThrow()
+        val inside = notes.create("", "içeride")
+        notes.create("", "dışarıda")
+        val main = viewModel()
+        collect(main)
+        advanceUntilIdle()
+        main.select(inside)
+        main.moveSelectedToFolder(folder)
+        advanceUntilIdle()
+
+        val vm = viewModel(NotesSection.FOLDER, folder)
+        collect(vm)
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.folder?.name).isEqualTo("Şiirler")
+        assertThat(vm.uiState.value.others.map { it.id }).containsExactly(inside)
+    }
+
+    @Test
+    fun lockedNotesOpenUpWhenTheSessionUnlocks() = runTest(dispatcher) {
+        lockManager.setPin("1234")
+        val id = notes.create("Başlık", "gizli")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+        vm.select(id)
+        vm.toggleLockedSelected()
+        advanceUntilIdle()
+        lockManager.lock()
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.others.single().title).isEmpty()
+        assertThat(vm.uiState.value.others.single().locked).isTrue()
+
+        lockManager.unlock("1234")
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.others.single().title).isEqualTo("Başlık")
     }
 
     @Test

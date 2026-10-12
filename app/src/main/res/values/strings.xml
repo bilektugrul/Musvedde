@@ -359,4 +359,22 @@
         <item quantity="other">%d locked notes need the backup\'s PIN</item>
     </plurals>
     <string name="auto_restore_enter_pin">Enter PIN</string>
+    <string name="nav_folders">Folders</string>
+    <string name="nav_edit_folders">Edit folders</string>
+    <string name="folder_new_hint">New folder</string>
+    <string name="folder_edit_hint">The lock button asks for the PIN to open the folder. Deleting a folder keeps its notes.</string>
+    <string name="folder_lock">Lock %1$s</string>
+    <string name="folder_unlock">Remove the lock from %1$s</string>
+    <string name="folder_delete">Delete %1$s</string>
+    <string name="folder_locked">Locked</string>
+    <string name="folder_move_title">Move to folder</string>
+    <string name="folder_none">No folder</string>
+    <string name="empty_folder">This folder is empty</string>
+    <string name="action_move_to_folder">Move to folder</string>
+    <string name="action_hide_from_main">Hide from the main page</string>
+    <string name="action_show_on_main">Show on the main page</string>
+    <string name="action_lock_note">Lock</string>
+    <string name="action_unlock_note">Remove the lock</string>
+    <string name="note_locked">Locked note</string>
+    <string name="note_hidden">Hidden from the main page</string>
 </resources>

@@ -48,12 +48,19 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aliarslan.musvedde.R
+import dev.aliarslan.musvedde.ui.lock.LockGate
 import dev.aliarslan.musvedde.ui.notes.ConfirmDialog
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(onBack: () -> Unit, viewModel: HistoryViewModel = hiltViewModel()) {
+    val locked by viewModel.locked.collectAsStateWithLifecycle()
+    locked?.let { LockGate(locked = it) { HistoryContent(onBack, viewModel) } }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HistoryContent(onBack: () -> Unit, viewModel: HistoryViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmClear by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf<Long?>(null) }
