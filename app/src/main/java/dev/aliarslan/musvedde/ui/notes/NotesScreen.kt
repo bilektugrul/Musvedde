@@ -202,7 +202,7 @@ fun NotesScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun NotesGrid(
+internal fun NotesGrid(
     state: NotesUiState,
     labelNames: ImmutableMap<Long, String>,
     onOpen: (Long) -> Unit,
@@ -302,15 +302,16 @@ private fun LazyStaggeredGridScope.noteItems(
                 selected = note.id in state.selection,
                 previewSize = state.previewSize,
                 previewFont = state.previewFont,
+                // The drag handle comes after the click handler so it sees each pointer event first: the
+                // click handler swallows everything after a long press, which would otherwise stop the drag.
+                // Handling the long press there keeps the release from counting as a tap that unselects.
                 modifier = Modifier
                     .testTag("note_card")
-                    .then(dragModifier)
                     .combinedClickable(
                         onClick = { onOpen(note.id) },
-                        // With reordering the long press also starts a drag; handling it here keeps the
-                        // release that ends the press from counting as a tap that would unselect the note.
                         onLongClick = { if (state.canReorder) onDragStart(note.id) else onSelect(note.id) },
-                    ),
+                    )
+                    .then(dragModifier),
             )
         }
     }
