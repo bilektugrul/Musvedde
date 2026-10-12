@@ -52,14 +52,14 @@ import kotlinx.collections.immutable.ImmutableSet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ColorPickerSheet(selected: NoteColor, onSelect: (NoteColor) -> Unit, onDismiss: () -> Unit) {
+fun ColorPickerSheet(selected: NoteColor?, onSelect: (NoteColor) -> Unit, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         ColorPicker(selected, onSelect, Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp).navigationBarsPadding())
     }
 }
 
 @Composable
-fun ColorPicker(selected: NoteColor, onSelect: (NoteColor) -> Unit, modifier: Modifier = Modifier) {
+fun ColorPicker(selected: NoteColor?, onSelect: (NoteColor) -> Unit, modifier: Modifier = Modifier) {
     val dark = LocalAppearance.current.dark
     FlowRow(
         modifier = modifier.fillMaxWidth(),

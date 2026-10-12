@@ -11,6 +11,7 @@ import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
+import dev.aliarslan.musvedde.domain.NoteColor
 import dev.aliarslan.musvedde.domain.NoteState
 import dev.aliarslan.musvedde.ui.NotesSection
 import kotlinx.coroutines.CoroutineScope
@@ -166,5 +167,54 @@ class NotesViewModelTest {
         val note = notes.get(id)!!
         assertThat(note.state).isEqualTo(NoteState.ACTIVE)
         assertThat(note.body).isEqualTo("not")
+    }
+
+    @Test
+    fun selectingTwiceKeepsTheNoteSelected() = runTest(dispatcher) {
+        val id = notes.create("", "a")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        vm.select(id)
+        vm.select(id)
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.selection).containsExactly(id)
+    }
+
+    @Test
+    fun colorChangeKeepsSelectionAndPickerShowsTheColor() = runTest(dispatcher) {
+        val a = notes.create("", "a")
+        val b = notes.create("", "b")
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+        vm.select(a)
+        vm.select(b)
+        advanceUntilIdle()
+        assertThat(vm.uiState.value.selectedColor).isEqualTo(NoteColor.DEFAULT)
+
+        vm.colorSelected(NoteColor.TEAL)
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.selection).containsExactly(a, b)
+        assertThat(vm.uiState.value.selectedColor).isEqualTo(NoteColor.TEAL)
+    }
+
+    @Test
+    fun mixedColorsShowNoColorAsSelected() = runTest(dispatcher) {
+        val a = notes.create("", "a")
+        val b = notes.create("", "b")
+        notes.setColor(listOf(a), NoteColor.RED)
+        val vm = viewModel()
+        collect(vm)
+        advanceUntilIdle()
+
+        vm.select(a)
+        vm.select(b)
+        advanceUntilIdle()
+
+        assertThat(vm.uiState.value.selectedColor).isNull()
     }
 }

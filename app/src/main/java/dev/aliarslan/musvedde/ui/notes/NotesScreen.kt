@@ -161,7 +161,7 @@ fun NotesScreen(
 
     if (showColors) {
         ColorPickerSheet(
-            selected = dev.aliarslan.musvedde.domain.NoteColor.DEFAULT,
+            selected = state.selectedColor,
             onSelect = {
                 viewModel.colorSelected(it)
                 showColors = false
@@ -220,10 +220,20 @@ private fun NotesGrid(
         pinned.moved(fromId, toId)?.let { pinned = it }
         others.moved(fromId, toId)?.let { others = it }
     }
-    val persistMove = { id: Long ->
+    fun neighbors(id: Long): Pair<Long?, Long?>? {
         val list = if (pinned.any { it.id == id }) pinned else others
         val index = list.indexOfFirst { it.id == id }
-        if (index >= 0) onMove(id, list.getOrNull(index - 1)?.id, list.getOrNull(index + 1)?.id)
+        return if (index >= 0) list.getOrNull(index - 1)?.id to list.getOrNull(index + 1)?.id else null
+    }
+    var neighborsAtDragStart by remember { mutableStateOf<Pair<Long?, Long?>?>(null) }
+    val startDrag = { id: Long ->
+        neighborsAtDragStart = neighbors(id)
+        onDragStart(id)
+    }
+    val persistMove = { id: Long ->
+        val now = neighbors(id)
+        if (now != null && now != neighborsAtDragStart) onMove(id, now.first, now.second)
+        neighborsAtDragStart = null
     }
     val appearance = LocalAppearance.current
 
@@ -243,11 +253,11 @@ private fun NotesGrid(
         if (pinned.isNotEmpty()) {
             header("pinned_header", R.string.header_pinned)
         }
-        noteItems(pinned, state, labelNames, reorderState, appearance, onOpen, onSelect, onDragStart, persistMove)
+        noteItems(pinned, state, labelNames, reorderState, appearance, onOpen, onSelect, startDrag, persistMove)
         if (pinned.isNotEmpty() && others.isNotEmpty()) {
             header("others_header", R.string.header_others)
         }
-        noteItems(others, state, labelNames, reorderState, appearance, onOpen, onSelect, onDragStart, persistMove)
+        noteItems(others, state, labelNames, reorderState, appearance, onOpen, onSelect, startDrag, persistMove)
     }
 }
 
@@ -297,7 +307,9 @@ private fun LazyStaggeredGridScope.noteItems(
                     .then(dragModifier)
                     .combinedClickable(
                         onClick = { onOpen(note.id) },
-                        onLongClick = if (state.canReorder) null else ({ onSelect(note.id) }),
+                        // With reordering the long press also starts a drag; handling it here keeps the
+                        // release that ends the press from counting as a tap that would unselect the note.
+                        onLongClick = { if (state.canReorder) onDragStart(note.id) else onSelect(note.id) },
                     ),
             )
         }

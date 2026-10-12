@@ -54,6 +54,7 @@ data class NotesUiState(
     val previewSize: PreviewSize = PreviewSize.MEDIUM,
     val previewFont: EditorFont = EditorFont.SERIF,
     val selection: ImmutableSet<Long> = persistentSetOf(),
+    val selectedColor: NoteColor? = null,
     val query: String = "",
     val canReorder: Boolean = false,
 )
@@ -112,6 +113,7 @@ class NotesViewModel @Inject constructor(
             previewSize = s.previewSize,
             previewFont = s.editorFont,
             selection = selected,
+            selectedColor = list.filter { it.id in selected }.map { it.color }.distinct().singleOrNull(),
             query = q,
             canReorder = q.isBlank() && section == NotesSection.ACTIVE,
         )
@@ -154,7 +156,7 @@ class NotesViewModel @Inject constructor(
         settings.update { it.copy(listLayout = if (it.listLayout == ListLayout.GRID) ListLayout.LIST else ListLayout.GRID) }
     }
 
-    fun colorSelected(color: NoteColor) = onSelection { notes.setColor(it, color) }
+    fun colorSelected(color: NoteColor) = onSelection(clear = false) { notes.setColor(it, color) }
 
     fun pinSelected() = onSelection { ids ->
         val all = uiState.value.pinned + uiState.value.others
