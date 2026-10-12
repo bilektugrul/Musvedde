@@ -21,6 +21,7 @@ android {
         versionCode = 6
         versionName = "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "REPOSITORY", "\"bilektugrul/Musvedde\"")
     }
 
     buildTypes {

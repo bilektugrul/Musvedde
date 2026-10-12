@@ -253,4 +253,13 @@
     <string name="drive_disconnect_title">Google Drive bağlantısı kesilsin mi?</string>
     <string name="drive_disconnect_confirm">Google Drive\'a otomatik yedekleme durur. Drive\'daki mevcut yedekler orada kalır; yeniden bağlandığında geri yükleyebilirsin.</string>
     <string name="drive_disconnect">Bağlantıyı kes</string>
+    <string name="about_source">GitHub\'daki kaynak kod</string>
+    <string name="about_update_check">Güncellemeleri kontrol et</string>
+    <string name="about_update_download">Güncellemeyi indir</string>
+    <string name="about_update_tap">Daha yeni bir sürüm olup olmadığına bakmak için dokun</string>
+    <string name="about_update_checking">Kontrol ediliyor…</string>
+    <string name="about_update_available">%1$s sürümü yayımlandı</string>
+    <string name="about_update_latest">En son sürümü kullanıyorsun</string>
+    <string name="about_update_no_releases">Henüz yayımlanmış bir sürüm yok</string>
+    <string name="about_update_failed">Kontrol edilemedi: %1$s</string>
 </resources>

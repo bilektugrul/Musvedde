@@ -14,6 +14,9 @@ import dev.aliarslan.musvedde.data.backup.BackupTarget
 import dev.aliarslan.musvedde.data.backup.FolderBackupTarget
 import dev.aliarslan.musvedde.data.backup.drive.DriveApi
 import dev.aliarslan.musvedde.data.backup.drive.DriveBackupTarget
+import dev.aliarslan.musvedde.BuildConfig
+import dev.aliarslan.musvedde.data.update.UpdateChecker
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.io.File
 import javax.inject.Named
@@ -28,7 +31,16 @@ object BackupModule {
 
     @Provides
     @Singleton
-    fun driveApi(): DriveApi = DriveApi(OkHttpClient())
+    fun httpClient(): OkHttpClient = OkHttpClient()
+
+    @Provides
+    @Singleton
+    fun driveApi(client: OkHttpClient): DriveApi = DriveApi(client)
+
+    @Provides
+    @Singleton
+    fun updateChecker(client: OkHttpClient): UpdateChecker =
+        UpdateChecker(client, "https://api.github.com/".toHttpUrl(), BuildConfig.REPOSITORY)
 
     @Provides
     @Named(BackupManager.CACHE_DIR)

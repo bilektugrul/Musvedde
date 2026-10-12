@@ -254,4 +254,13 @@
     <string name="drive_disconnect_title">Disconnect Google Drive?</string>
     <string name="drive_disconnect_confirm">Automatic backups to Google Drive will stop. Backups already in Drive stay there and can still be restored after you reconnect.</string>
     <string name="drive_disconnect">Disconnect</string>
+    <string name="about_source">Source code on GitHub</string>
+    <string name="about_update_check">Check for updates</string>
+    <string name="about_update_download">Download update</string>
+    <string name="about_update_tap">Tap to look for a newer version</string>
+    <string name="about_update_checking">Checking…</string>
+    <string name="about_update_available">Version %1$s is available</string>
+    <string name="about_update_latest">You have the latest version</string>
+    <string name="about_update_no_releases">No releases have been published yet</string>
+    <string name="about_update_failed">Could not check: %1$s</string>
 </resources>

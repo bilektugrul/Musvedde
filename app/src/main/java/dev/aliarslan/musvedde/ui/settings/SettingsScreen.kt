@@ -57,7 +57,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.aliarslan.musvedde.BuildConfig
 import dev.aliarslan.musvedde.R
 import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
@@ -529,10 +528,4 @@ private fun StatusLine(lastAt: Long?, error: String?, enabled: Boolean) {
         color = if (error != null) androidx.compose.material3.MaterialTheme.colorScheme.error else androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 8.dp),
     )
-}
-
-@Composable
-private fun AboutSection() {
-    ActionRow(stringResource(R.string.app_name), stringResource(R.string.about_version, BuildConfig.VERSION_NAME)) {}
-    ActionRow(stringResource(R.string.about_license), stringResource(R.string.about_license_summary)) {}
 }
