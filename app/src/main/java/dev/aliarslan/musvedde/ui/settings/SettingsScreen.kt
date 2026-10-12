@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.RestartAlt
@@ -71,6 +72,9 @@ import dev.aliarslan.musvedde.domain.PreviewSize
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
 import dev.aliarslan.musvedde.domain.ThemePalette
+import dev.aliarslan.musvedde.ui.lock.LockViewModel
+import dev.aliarslan.musvedde.ui.lock.PinSetupDialog
+import dev.aliarslan.musvedde.ui.lock.biometricAvailable
 import dev.aliarslan.musvedde.notification.hasNotificationPermission
 import java.text.DateFormat
 import java.util.Date
@@ -175,6 +179,7 @@ fun SettingsCategoryScreen(
                     SettingsCategory.ACCESSIBILITY -> AccessibilitySection(s, viewModel::update)
                     SettingsCategory.EDITOR -> EditorSection(s, viewModel::update)
                     SettingsCategory.NOTIFICATIONS -> NotificationsSection(s, viewModel::update)
+                    SettingsCategory.SECURITY -> SecuritySection()
                     SettingsCategory.BACKUP -> BackupSection(
                         settings = s,
                         viewModel = viewModel,
@@ -235,6 +240,7 @@ private fun SettingsCategory.titleRes() = when (this) {
     SettingsCategory.ACCESSIBILITY -> R.string.settings_section_accessibility
     SettingsCategory.EDITOR -> R.string.settings_section_editor
     SettingsCategory.NOTIFICATIONS -> R.string.settings_section_notifications
+    SettingsCategory.SECURITY -> R.string.settings_section_security
     SettingsCategory.BACKUP -> R.string.settings_section_backup
     SettingsCategory.STORAGE -> R.string.settings_section_storage
     SettingsCategory.TROUBLESHOOTING -> R.string.settings_section_troubleshooting
@@ -247,6 +253,7 @@ private fun SettingsCategory.summaryRes() = when (this) {
     SettingsCategory.ACCESSIBILITY -> R.string.settings_summary_accessibility
     SettingsCategory.EDITOR -> R.string.settings_summary_editor
     SettingsCategory.NOTIFICATIONS -> R.string.settings_summary_notifications
+    SettingsCategory.SECURITY -> R.string.settings_summary_security
     SettingsCategory.BACKUP -> R.string.settings_summary_backup
     SettingsCategory.STORAGE -> R.string.settings_storage_summary
     SettingsCategory.TROUBLESHOOTING -> R.string.settings_summary_troubleshooting
@@ -259,6 +266,7 @@ private fun SettingsCategory.icon(): ImageVector = when (this) {
     SettingsCategory.ACCESSIBILITY -> Icons.Outlined.Accessibility
     SettingsCategory.EDITOR -> Icons.Outlined.EditNote
     SettingsCategory.NOTIFICATIONS -> Icons.Outlined.Notifications
+    SettingsCategory.SECURITY -> Icons.Outlined.Lock
     SettingsCategory.BACKUP -> Icons.Outlined.Backup
     SettingsCategory.STORAGE -> Icons.Outlined.Storage
     SettingsCategory.TROUBLESHOOTING -> Icons.Outlined.BugReport
@@ -376,6 +384,32 @@ private fun LanguageRow() {
             localeManager.applicationLocales = if (tag.isEmpty()) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
         },
     )
+}
+
+@Composable
+private fun SecuritySection(lock: LockViewModel = hiltViewModel()) {
+    val context = LocalContext.current
+    val hasPin by lock.hasPin.collectAsStateWithLifecycle()
+    val biometric by lock.biometricEnabled.collectAsStateWithLifecycle()
+    var editingPin by rememberSaveable { mutableStateOf(false) }
+    ActionRow(
+        stringResource(R.string.lock_pin),
+        stringResource(if (hasPin == true) R.string.security_pin_change else R.string.security_pin_set),
+    ) { editingPin = true }
+    if (hasPin == true && remember { biometricAvailable(context) }) {
+        SwitchRow(stringResource(R.string.security_biometric), biometric, stringResource(R.string.security_biometric_summary)) {
+            lock.setBiometricEnabled(it)
+        }
+    }
+    Text(
+        stringResource(R.string.security_explanation),
+        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+    )
+    if (editingPin) {
+        PinSetupDialog(changing = hasPin == true, onDone = { editingPin = false }, onDismiss = { editingPin = false }, viewModel = lock)
+    }
 }
 
 @Composable

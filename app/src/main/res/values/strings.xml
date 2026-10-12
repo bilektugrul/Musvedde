@@ -320,4 +320,38 @@
         <item quantity="one">Imported 1 note from Google Keep</item>
         <item quantity="other">Imported %d notes from Google Keep</item>
     </plurals>
+    <string name="settings_section_security">Lock &amp; privacy</string>
+    <string name="settings_summary_security">PIN, fingerprint and locked notes</string>
+    <string name="security_pin_set">Set a PIN to lock folders and notes</string>
+    <string name="security_pin_change">Change the PIN</string>
+    <string name="security_biometric">Unlock with fingerprint</string>
+    <string name="security_biometric_summary">The PIN still works and is still needed for backups</string>
+    <string name="security_explanation">Locked notes close again whenever you leave the app. In backups they are encrypted with your PIN, so restoring a backup asks for the PIN it was made with. Your fingerprint is never stored by Müsvedde. If you forget the PIN, locked notes cannot be recovered; a longer PIN makes backups harder to crack.</string>
+    <string name="lock_pin">PIN</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_unlock_title">Enter your PIN</string>
+    <string name="lock_use_pin">Use PIN</string>
+    <string name="lock_use_biometric">Use fingerprint</string>
+    <string name="lock_gate_title">This is locked</string>
+    <string name="lock_create_pin">Create a PIN</string>
+    <string name="lock_change_pin">Change the PIN</string>
+    <string name="lock_pin_explanation">4 to 16 digits. It opens locked folders and notes and protects them in backups. It cannot be recovered if forgotten.</string>
+    <string name="lock_current_pin">Current PIN</string>
+    <string name="lock_new_pin">New PIN</string>
+    <string name="lock_confirm_pin">Repeat the PIN</string>
+    <string name="lock_save_pin">Save</string>
+    <string name="lock_pin_invalid">Use 4 to 16 digits</string>
+    <string name="lock_pin_mismatch">The PINs do not match</string>
+    <string name="lock_current_pin_wrong">The current PIN is wrong</string>
+    <plurals name="lock_wrong_pin">
+        <item quantity="one">Wrong PIN. 1 try left before a wait.</item>
+        <item quantity="other">Wrong PIN. %d tries left before a wait.</item>
+    </plurals>
+    <plurals name="lock_too_many">
+        <item quantity="one">Too many tries. Try again in 1 second.</item>
+        <item quantity="other">Too many tries. Try again in %d seconds.</item>
+    </plurals>
+    <string name="restore_pin_title">PIN for locked notes</string>
+    <string name="restore_pin_message">This backup has locked notes. Enter the PIN that was set when the backup was made.</string>
+    <string name="restore_pin_wrong">That PIN does not open this backup</string>
 </resources>

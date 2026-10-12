@@ -319,4 +319,38 @@
         <item quantity="one">Google Keep\'ten 1 not aktarıldı</item>
         <item quantity="other">Google Keep\'ten %d not aktarıldı</item>
     </plurals>
+    <string name="settings_section_security">Kilit ve gizlilik</string>
+    <string name="settings_summary_security">PIN, parmak izi ve kilitli notlar</string>
+    <string name="security_pin_set">Klasör ve not kilitlemek için PIN belirle</string>
+    <string name="security_pin_change">PIN\'i değiştir</string>
+    <string name="security_biometric">Parmak iziyle aç</string>
+    <string name="security_biometric_summary">PIN yine çalışır ve yedekler için yine gerekir</string>
+    <string name="security_explanation">Kilitli notlar uygulamadan her çıktığında yeniden kilitlenir. Yedeklerde PIN\'inle şifrelenir; bu yüzden yedek geri yüklenirken, yedeğin alındığı andaki PIN sorulur. Parmak izin Müsvedde tarafından asla saklanmaz. PIN\'i unutursan kilitli notlar kurtarılamaz; daha uzun bir PIN yedekleri kırmayı zorlaştırır.</string>
+    <string name="lock_pin">PIN</string>
+    <string name="lock_unlock">Kilidi aç</string>
+    <string name="lock_unlock_title">PIN\'ini gir</string>
+    <string name="lock_use_pin">PIN kullan</string>
+    <string name="lock_use_biometric">Parmak izi kullan</string>
+    <string name="lock_gate_title">Burası kilitli</string>
+    <string name="lock_create_pin">PIN oluştur</string>
+    <string name="lock_change_pin">PIN\'i değiştir</string>
+    <string name="lock_pin_explanation">4 ile 16 rakam. Kilitli klasör ve notları açar, yedeklerde onları korur. Unutulursa kurtarılamaz.</string>
+    <string name="lock_current_pin">Mevcut PIN</string>
+    <string name="lock_new_pin">Yeni PIN</string>
+    <string name="lock_confirm_pin">PIN\'i tekrarla</string>
+    <string name="lock_save_pin">Kaydet</string>
+    <string name="lock_pin_invalid">4 ile 16 rakam kullan</string>
+    <string name="lock_pin_mismatch">PIN\'ler eşleşmiyor</string>
+    <string name="lock_current_pin_wrong">Mevcut PIN yanlış</string>
+    <plurals name="lock_wrong_pin">
+        <item quantity="one">Yanlış PIN. Beklemeden önce 1 hakkın kaldı.</item>
+        <item quantity="other">Yanlış PIN. Beklemeden önce %d hakkın kaldı.</item>
+    </plurals>
+    <plurals name="lock_too_many">
+        <item quantity="one">Çok fazla deneme. 1 saniye sonra tekrar dene.</item>
+        <item quantity="other">Çok fazla deneme. %d saniye sonra tekrar dene.</item>
+    </plurals>
+    <string name="restore_pin_title">Kilitli notların PIN\'i</string>
+    <string name="restore_pin_message">Bu yedekte kilitli notlar var. Yedeğin alındığı sırada ayarlı olan PIN\'i gir.</string>
+    <string name="restore_pin_wrong">Bu PIN bu yedeği açmıyor</string>
 </resources>

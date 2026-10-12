@@ -88,6 +88,7 @@ class SettingsCategoryTest {
 
     @Test
     fun categoriesWithoutSettingsCannotBeReset() {
+        assertThat(SettingsCategory.SECURITY.reset(changed)).isNull()
         assertThat(SettingsCategory.STORAGE.reset(changed)).isNull()
         assertThat(SettingsCategory.TROUBLESHOOTING.reset(changed)).isNull()
         assertThat(SettingsCategory.ABOUT.reset(changed)).isNull()

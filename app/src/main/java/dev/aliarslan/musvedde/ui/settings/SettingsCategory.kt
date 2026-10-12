@@ -12,6 +12,7 @@ enum class SettingsCategory {
     ACCESSIBILITY,
     EDITOR,
     NOTIFICATIONS,
+    SECURITY,
     BACKUP,
     STORAGE,
     TROUBLESHOOTING,
@@ -44,7 +45,7 @@ enum class SettingsCategory {
             EDITOR -> settings.copy(alwaysFocusMode = d.alwaysFocusMode)
             NOTIFICATIONS -> settings.copy(restoreDismissedPins = d.restoreDismissedPins)
             BACKUP -> settings.copy(backupFrequency = d.backupFrequency, backupRetention = d.backupRetention)
-            STORAGE, TROUBLESHOOTING, ABOUT -> null
+            SECURITY, STORAGE, TROUBLESHOOTING, ABOUT -> null
         }
     }
 
