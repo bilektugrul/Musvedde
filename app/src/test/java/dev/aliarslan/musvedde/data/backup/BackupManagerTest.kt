@@ -85,6 +85,28 @@ class BackupManagerTest {
     fun tearDown() = db.close()
 
     @Test
+    fun missingVaultKeyIsReportedOnEveryTarget() = runTest {
+        val id = notes.create("", "kilitli")
+        db.noteDao().setLocked(listOf(id), true)
+        val manager = BackupManager(
+            targets = setOf(folder),
+            serializer = BackupSerializer(db, clock, vaultKeys = { null }),
+            notes = notes,
+            settings = settings,
+            logger = logger,
+            clock = clock,
+            cacheDir = tmp.root,
+            safetyDir = safetyDir,
+        )
+
+        val result = manager.backupNow(scheduled = false) as BackupRunResult.Done
+
+        assertThat(result.failed.keys).containsExactly(BackupTarget.FOLDER)
+        assertThat(folder.files).isEmpty()
+        assertThat(settings.settings.first().lastFolderBackupError).contains("PIN")
+    }
+
+    @Test
     fun scheduledSkipsWhenUnchanged() = runTest {
         notes.create("", "satır")
         now += 1_000

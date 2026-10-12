@@ -61,7 +61,7 @@ class BackupSerializerTest {
         RestoreService(target, serializer(target)).restore(content, RestoreMode.REPLACE).getOrThrow()
 
         assertThat(content.manifest.noteCount).isEqualTo(1_234)
-        assertThat(content.manifest.formatVersion).isEqualTo(2)
+        assertThat(content.manifest.formatVersion).isEqualTo(BackupSerializer.FORMAT_VERSION)
         val restored = target.noteDao().pageAll(2_000, 0).map { it.withoutId() }
         val original = source.noteDao().pageAll(2_000, 0).map { it.withoutId() }
         assertThat(restored).containsExactlyElementsIn(original)

@@ -52,7 +52,13 @@ class BackupManager @Inject constructor(
         val name = BackupSerializer.fileName(now)
         val temp = withContext(Dispatchers.IO) { File.createTempFile("backup", ".zip", cacheDir) }
         try {
-            temp.outputStream().buffered().use { serializer.write(it) }
+            try {
+                temp.outputStream().buffered().use { serializer.write(it) }
+            } catch (e: BackupKeyUnavailableException) {
+                ready.forEach { record(it.id, at = null, error = e.message) }
+                logger.error("Backup", e.message.orEmpty(), e)
+                return BackupRunResult.Done(emptyList(), ready.associate { it.id to e })
+            }
             val succeeded = mutableListOf<String>()
             val failed = linkedMapOf<String, Throwable>()
             for (target in ready) {

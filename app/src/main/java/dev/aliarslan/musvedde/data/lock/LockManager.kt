@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.aliarslan.musvedde.core.Clock
+import dev.aliarslan.musvedde.data.backup.VaultKeySource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,7 @@ class LockManager @Inject constructor(
     private val keyWrapper: KeyWrapper,
     private val clock: Clock,
     private val config: LockConfig,
-) {
+) : VaultKeySource {
     private val _unlocked = MutableStateFlow(false)
     val unlocked: StateFlow<Boolean> = _unlocked.asStateFlow()
 
@@ -120,7 +121,7 @@ class LockManager @Inject constructor(
     suspend fun deriveBackupKey(pin: String, salt: ByteArray, iterations: Int): ByteArray =
         withContext(Dispatchers.Default) { PinKdf.derive(pin, salt, iterations) }
 
-    suspend fun backupKey(): BackupKey? {
+    override suspend fun backupKey(): BackupKey? {
         val prefs = dataStore.data.first()
         val wrapped = prefs[Keys.backupKey]?.decoded() ?: return null
         val salt = prefs[Keys.backupSalt]?.decoded() ?: return null
