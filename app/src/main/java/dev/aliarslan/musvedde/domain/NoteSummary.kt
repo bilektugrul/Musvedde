@@ -12,4 +12,8 @@ data class NoteSummary(
     val position: Long,
     val updatedAt: Long,
     val labelIds: ImmutableList<Long>,
+    val folderId: Long? = null,
+    val hidden: Boolean = false,
+    /** True when the note itself or its folder is locked. */
+    val locked: Boolean = false,
 )

@@ -24,8 +24,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 sealed interface NoteFilter {
+    /** Notes in [state]; the active notes leave out hidden ones and locked folders, like the main page. */
     data class InState(val state: NoteState) : NoteFilter
     data class WithLabel(val labelId: Long) : NoteFilter
+    data class InFolder(val folderId: Long) : NoteFilter
     data class Search(val query: String) : NoteFilter
 }
 
@@ -38,18 +40,27 @@ class NoteRepository @Inject constructor(
     private val dao = db.noteDao()
     private val labelDao = db.labelDao()
 
-    fun observe(filter: NoteFilter): Flow<ImmutableList<NoteSummary>> {
+    /** Locked notes are listed without their title and text unless [unlocked]. */
+    fun observe(filter: NoteFilter, unlocked: Boolean = false): Flow<ImmutableList<NoteSummary>> {
         val rows = when (filter) {
-            is NoteFilter.InState -> dao.observeSummaries(filter.state.name)
-            is NoteFilter.WithLabel -> dao.observeSummariesByLabel(filter.labelId)
-            is NoteFilter.Search -> toFtsQuery(filter.query)?.let(dao::searchSummaries)
+            is NoteFilter.InState ->
+                dao.observeSummaries(filter.state.name, mainPage = filter.state == NoteState.ACTIVE, unlocked = unlocked)
+            is NoteFilter.WithLabel -> dao.observeSummariesByLabel(filter.labelId, unlocked)
+            is NoteFilter.InFolder -> dao.observeSummariesByFolder(filter.folderId)
+            is NoteFilter.Search -> toFtsQuery(filter.query)?.let { dao.searchSummaries(it, unlocked) }
                 ?: return flowOf(persistentListOf())
         }
         return rows
-            .map { list -> list.map { it.toDomain() }.toImmutableList() }
+            .map { list ->
+                list.map { row -> row.toDomain().let { if (it.locked && !unlocked) it.copy(title = "", preview = "") else it } }
+                    .toImmutableList()
+            }
             .distinctUntilChanged()
             .flowOn(io)
     }
+
+    fun observeIsLocked(id: Long): Flow<Boolean> =
+        dao.observeIsLocked(id).map { it == true }.distinctUntilChanged().flowOn(io)
 
     fun observePinnedToNotification(): Flow<List<Note>> =
         dao.observePinnedToNotification()
@@ -61,7 +72,7 @@ class NoteRepository @Inject constructor(
         dao.getById(id)?.toDomain(labelDao.labelIdsFor(id))
     }
 
-    suspend fun create(title: String, body: String): Long = withContext(io) {
+    suspend fun create(title: String, body: String, folderId: Long? = null): Long = withContext(io) {
         db.withTransaction {
             val now = clock.now()
             dao.insert(
@@ -76,10 +87,19 @@ class NoteRepository @Inject constructor(
                     createdAt = now,
                     updatedAt = now,
                     trashedAt = null,
+                    folderId = folderId,
                 ),
             )
         }
     }
+
+    suspend fun setFolder(ids: List<Long>, folderId: Long?) = withContext(io) { dao.setFolder(ids, folderId) }
+
+    suspend fun setHidden(ids: List<Long>, hidden: Boolean) = withContext(io) { dao.setHidden(ids, hidden) }
+
+    suspend fun setLocked(ids: List<Long>, locked: Boolean) = withContext(io) { dao.setLocked(ids, locked) }
+
+    suspend fun hasLockedNotes(): Boolean = withContext(io) { dao.countLocked() > 0 }
 
     suspend fun updateContent(id: Long, title: String, body: String) {
         withContext(io) { dao.updateContent(id, title, body, clock.now()) }

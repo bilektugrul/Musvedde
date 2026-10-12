@@ -42,5 +42,28 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun migrate2To3AddsFoldersAndVisibilityFlags() {
+        helper.createDatabase(dbPath, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO notes (id, title, body, color, pinnedToTop, pinnedToNotification, state, position, createdAt, updatedAt, trashedAt) " +
+                    "VALUES (1, 'Gece', 'satır', 'DEFAULT', 0, 0, 'ACTIVE', 1024, 1, 1, NULL)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbPath, 3, true).use { db ->
+            db.query("SELECT folderId, hidden, locked FROM notes WHERE id = 1").use { cursor ->
+                assertThat(cursor.moveToFirst()).isTrue()
+                assertThat(cursor.isNull(0)).isTrue()
+                assertThat(cursor.getInt(1)).isEqualTo(0)
+                assertThat(cursor.getInt(2)).isEqualTo(0)
+            }
+            db.query("SELECT COUNT(*) FROM folders").use { cursor ->
+                cursor.moveToFirst()
+                assertThat(cursor.getInt(0)).isEqualTo(0)
+            }
+        }
+    }
+
     private val dbPath = ApplicationProvider.getApplicationContext<Context>().getDatabasePath("migration-test.db").absolutePath
 }

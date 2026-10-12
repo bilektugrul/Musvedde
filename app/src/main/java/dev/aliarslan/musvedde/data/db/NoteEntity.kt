@@ -1,5 +1,6 @@
 package dev.aliarslan.musvedde.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -12,6 +13,7 @@ import dev.aliarslan.musvedde.domain.NoteState
     indices = [
         Index("state", "pinnedToTop", "position"),
         Index("updatedAt"),
+        Index("folderId"),
     ],
 )
 data class NoteEntity(
@@ -26,6 +28,9 @@ data class NoteEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val trashedAt: Long?,
+    @ColumnInfo(defaultValue = "NULL") val folderId: Long? = null,
+    @ColumnInfo(defaultValue = "0") val hidden: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val locked: Boolean = false,
 )
 
 fun NoteEntity.toDomain(labelIds: List<Long> = emptyList()) = Note(
@@ -41,4 +46,7 @@ fun NoteEntity.toDomain(labelIds: List<Long> = emptyList()) = Note(
     updatedAt = updatedAt,
     trashedAt = trashedAt,
     labelIds = labelIds,
+    folderId = folderId,
+    hidden = hidden,
+    locked = locked,
 )

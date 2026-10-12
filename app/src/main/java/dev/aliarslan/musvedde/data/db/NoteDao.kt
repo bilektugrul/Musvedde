@@ -7,40 +7,97 @@ import kotlinx.coroutines.flow.Flow
 
 data class NoteContentKey(val title: String, val body: String, val createdAt: Long)
 
+private const val IN_LOCKED_FOLDER = "EXISTS (SELECT 1 FROM folders f WHERE f.id = n.folderId AND f.locked = 1)"
+
 private const val SUMMARY_COLUMNS = """
     n.id, n.title, substr(n.body, 1, 400) AS preview, n.color, n.pinnedToTop, n.pinnedToNotification,
     n.position, n.updatedAt,
-    (SELECT GROUP_CONCAT(nl.labelId) FROM note_labels nl WHERE nl.noteId = n.id) AS labelIds
+    (SELECT GROUP_CONCAT(nl.labelId) FROM note_labels nl WHERE nl.noteId = n.id) AS labelIds,
+    n.folderId, n.hidden, (n.locked OR $IN_LOCKED_FOLDER) AS locked
 """
 
 @Dao
 interface NoteDao {
 
-    @Query("SELECT $SUMMARY_COLUMNS FROM notes n WHERE n.state = :state ORDER BY n.pinnedToTop DESC, n.position DESC")
-    fun observeSummaries(state: String): Flow<List<NoteSummaryRow>>
+    /**
+     * Notes in [state]. The main page leaves out hidden notes and everything in a locked folder; elsewhere
+     * locked folders' notes are only listed while [unlocked].
+     */
+    @Query(
+        """
+        SELECT $SUMMARY_COLUMNS FROM notes n
+        WHERE n.state = :state
+            AND (:mainPage = 0 OR (n.hidden = 0 AND NOT $IN_LOCKED_FOLDER))
+            AND (:unlocked OR NOT $IN_LOCKED_FOLDER)
+        ORDER BY n.pinnedToTop DESC, n.position DESC
+        """,
+    )
+    fun observeSummaries(state: String, mainPage: Boolean, unlocked: Boolean): Flow<List<NoteSummaryRow>>
+
+    @Query(
+        """
+        SELECT $SUMMARY_COLUMNS FROM notes n
+        WHERE n.folderId = :folderId AND n.state = 'ACTIVE'
+        ORDER BY n.pinnedToTop DESC, n.position DESC
+        """,
+    )
+    fun observeSummariesByFolder(folderId: Long): Flow<List<NoteSummaryRow>>
 
     @Query(
         """
         SELECT $SUMMARY_COLUMNS FROM notes n
         JOIN note_labels l ON l.noteId = n.id
-        WHERE l.labelId = :labelId AND n.state IN ('ACTIVE', 'ARCHIVED')
+        WHERE l.labelId = :labelId AND n.state IN ('ACTIVE', 'ARCHIVED') AND (:unlocked OR NOT $IN_LOCKED_FOLDER)
         ORDER BY n.pinnedToTop DESC, n.position DESC
         """,
     )
-    fun observeSummariesByLabel(labelId: Long): Flow<List<NoteSummaryRow>>
+    fun observeSummariesByLabel(labelId: Long, unlocked: Boolean): Flow<List<NoteSummaryRow>>
 
     @Query(
         """
         SELECT $SUMMARY_COLUMNS FROM notes n
         JOIN notes_fts ON notes_fts.rowid = n.id
         WHERE notes_fts MATCH :ftsQuery AND n.state != 'TRASHED'
+            AND (:unlocked OR NOT (n.locked OR $IN_LOCKED_FOLDER))
         ORDER BY n.pinnedToTop DESC, n.updatedAt DESC
         """,
     )
-    fun searchSummaries(ftsQuery: String): Flow<List<NoteSummaryRow>>
+    fun searchSummaries(ftsQuery: String, unlocked: Boolean): Flow<List<NoteSummaryRow>>
 
-    @Query("SELECT * FROM notes WHERE pinnedToNotification = 1 AND state = 'ACTIVE'")
+    @Query(
+        """
+        SELECT n.* FROM notes n
+        WHERE n.pinnedToNotification = 1 AND n.state = 'ACTIVE' AND n.locked = 0 AND NOT $IN_LOCKED_FOLDER
+        """,
+    )
     fun observePinnedToNotification(): Flow<List<NoteEntity>>
+
+    @Query("SELECT (n.locked OR $IN_LOCKED_FOLDER) FROM notes n WHERE n.id = :id")
+    fun observeIsLocked(id: Long): Flow<Boolean?>
+
+    @Query("UPDATE notes SET folderId = :folderId WHERE id IN (:ids)")
+    suspend fun setFolder(ids: List<Long>, folderId: Long?)
+
+    @Query("UPDATE notes SET folderId = NULL WHERE folderId = :folderId")
+    suspend fun clearFolder(folderId: Long)
+
+    @Query("UPDATE notes SET hidden = :hidden WHERE id IN (:ids)")
+    suspend fun setHidden(ids: List<Long>, hidden: Boolean)
+
+    @Query(
+        """
+        UPDATE notes SET locked = :locked,
+            pinnedToNotification = CASE WHEN :locked THEN 0 ELSE pinnedToNotification END
+        WHERE id IN (:ids)
+        """,
+    )
+    suspend fun setLocked(ids: List<Long>, locked: Boolean)
+
+    @Query("UPDATE notes SET pinnedToNotification = 0 WHERE folderId = :folderId")
+    suspend fun unpinNotificationsInFolder(folderId: Long)
+
+    @Query("SELECT COUNT(*) FROM notes n WHERE n.locked = 1 OR $IN_LOCKED_FOLDER")
+    suspend fun countLocked(): Int
 
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getById(id: Long): NoteEntity?

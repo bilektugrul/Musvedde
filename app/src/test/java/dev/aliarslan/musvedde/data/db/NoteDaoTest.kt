@@ -23,7 +23,7 @@ class NoteDaoTest {
         val high = dao.insert(noteEntity(title = "high", position = 2))
         val pinned = dao.insert(noteEntity(title = "pinned", position = 0, pinnedToTop = true))
 
-        val ids = dao.observeSummaries("ACTIVE").first().map { it.id }
+        val ids = dao.observeSummaries("ACTIVE", mainPage = true, unlocked = false).first().map { it.id }
 
         assertThat(ids).containsExactly(pinned, high, low).inOrder()
     }
@@ -32,7 +32,7 @@ class NoteDaoTest {
     fun summaryPreviewIsTruncated() = runTest {
         dao.insert(noteEntity(body = "ş".repeat(50_000)))
 
-        val summary = dao.observeSummaries("ACTIVE").first().single()
+        val summary = dao.observeSummaries("ACTIVE", mainPage = true, unlocked = false).first().single()
 
         assertThat(summary.preview.length).isEqualTo(400)
     }
@@ -54,7 +54,7 @@ class NoteDaoTest {
         val id = dao.insert(noteEntity(body = "gecenin karanlığı"))
         dao.insert(noteEntity(body = "sabah"))
 
-        val ids = dao.searchSummaries("karan*").first().map { it.id }
+        val ids = dao.searchSummaries("karan*", unlocked = false).first().map { it.id }
 
         assertThat(ids).containsExactly(id)
     }
@@ -64,8 +64,8 @@ class NoteDaoTest {
         val id = dao.insert(noteEntity(body = "eski"))
         dao.updateContent(id, "", "yeni satır", updatedAt = 2)
 
-        assertThat(dao.searchSummaries("eski*").first()).isEmpty()
-        assertThat(dao.searchSummaries("satır*").first().map { it.id }).containsExactly(id)
+        assertThat(dao.searchSummaries("eski*", unlocked = false).first()).isEmpty()
+        assertThat(dao.searchSummaries("satır*", unlocked = false).first().map { it.id }).containsExactly(id)
     }
 
     @Test
@@ -90,7 +90,7 @@ class NoteDaoTest {
         labelDao.addToNotes(l1, listOf(note))
         labelDao.addToNotes(l2, listOf(note))
 
-        val summary = dao.observeSummaries("ACTIVE").first().single().toDomain()
+        val summary = dao.observeSummaries("ACTIVE", mainPage = true, unlocked = false).first().single().toDomain()
 
         assertThat(summary.labelIds).containsExactly(l1, l2)
     }

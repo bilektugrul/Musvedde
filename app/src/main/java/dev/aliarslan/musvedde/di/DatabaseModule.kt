@@ -34,6 +34,9 @@ object DatabaseModule {
     fun labelDao(db: MusveddeDatabase) = db.labelDao()
 
     @Provides
+    fun folderDao(db: MusveddeDatabase) = db.folderDao()
+
+    @Provides
     fun errorLogDao(db: MusveddeDatabase) = db.errorLogDao()
 
     @Provides

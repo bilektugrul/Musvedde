@@ -13,4 +13,7 @@ data class Note(
     val updatedAt: Long,
     val trashedAt: Long?,
     val labelIds: List<Long>,
+    val folderId: Long? = null,
+    val hidden: Boolean = false,
+    val locked: Boolean = false,
 )
