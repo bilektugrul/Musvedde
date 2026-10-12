@@ -64,6 +64,7 @@ class SettingsRepository @Inject constructor(
         val lastFolderBackupError = stringPreferencesKey("lastFolderBackupError")
         val lastDriveBackupAt = longPreferencesKey("lastDriveBackupAt")
         val lastDriveBackupError = stringPreferencesKey("lastDriveBackupError")
+        val autoRestoreChecked = booleanPreferencesKey("autoRestoreChecked")
     }
 
     private fun Preferences.toSettings(): Settings {
@@ -96,6 +97,7 @@ class SettingsRepository @Inject constructor(
             lastFolderBackupError = this[Keys.lastFolderBackupError],
             lastDriveBackupAt = this[Keys.lastDriveBackupAt],
             lastDriveBackupError = this[Keys.lastDriveBackupError],
+            autoRestoreChecked = this[Keys.autoRestoreChecked] ?: d.autoRestoreChecked,
         ).sanitized()
     }
 
@@ -126,6 +128,7 @@ class SettingsRepository @Inject constructor(
         setOrRemove(Keys.lastFolderBackupError, s.lastFolderBackupError)
         setOrRemove(Keys.lastDriveBackupAt, s.lastDriveBackupAt)
         setOrRemove(Keys.lastDriveBackupError, s.lastDriveBackupError)
+        this[Keys.autoRestoreChecked] = s.autoRestoreChecked
     }
 
     private fun <T> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {

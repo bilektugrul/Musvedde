@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import dev.aliarslan.musvedde.core.Clock
+import dev.aliarslan.musvedde.data.backup.AutoRestore
 import dev.aliarslan.musvedde.data.errorlog.CrashRecorder
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.errorlog.ErrorLogRepository
@@ -56,11 +57,15 @@ class MusveddeApp : Application(), Configuration.Provider {
     @Inject
     lateinit var openNotes: OpenNoteTracker
 
+    @Inject
+    lateinit var autoRestore: Lazy<AutoRestore>
+
     override fun onCreate() {
         CrashRecorder(CoreModule.pendingCrashFile(this), Clock.System).install()
         super.onCreate()
         appScope.launch { errorLog.importPendingCrash() }
         appScope.launch { versions.recoverPending() }
+        appScope.launch { autoRestore.get().runOnFirstLaunch() }
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) = openNotes.setForeground(true)

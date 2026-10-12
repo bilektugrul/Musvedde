@@ -57,6 +57,7 @@ data class Settings(
     val lastFolderBackupError: String? = null,
     val lastDriveBackupAt: Long? = null,
     val lastDriveBackupError: String? = null,
+    val autoRestoreChecked: Boolean = false,
 ) {
     fun sanitized() = copy(
         uiTextScale = uiTextScale.coerceIn(UI_TEXT_SCALE_RANGE),

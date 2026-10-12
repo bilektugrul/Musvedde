@@ -12,6 +12,7 @@ import dagger.multibindings.IntoSet
 import dev.aliarslan.musvedde.data.backup.BackupManager
 import dev.aliarslan.musvedde.data.backup.BackupTarget
 import dev.aliarslan.musvedde.data.backup.FolderBackupTarget
+import dev.aliarslan.musvedde.data.backup.SilentBackupSource
 import dev.aliarslan.musvedde.data.backup.drive.DriveApi
 import dev.aliarslan.musvedde.data.backup.drive.DriveBackupTarget
 import dev.aliarslan.musvedde.BuildConfig
@@ -61,4 +62,7 @@ interface BackupTargetsModule {
     @Binds
     @IntoSet
     fun drive(target: DriveBackupTarget): BackupTarget
+
+    @Binds
+    fun silentSource(target: DriveBackupTarget): SilentBackupSource
 }

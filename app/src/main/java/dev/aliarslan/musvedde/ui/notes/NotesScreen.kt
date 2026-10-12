@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
@@ -72,8 +73,10 @@ fun NotesScreen(
     onOpenNote: (Long) -> Unit,
     onNewNote: () -> Unit,
     viewModel: NotesViewModel = hiltViewModel(),
+    autoRestoreViewModel: AutoRestoreViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val restoreState by autoRestoreViewModel.state.collectAsStateWithLifecycle()
     val labels by viewModel.allLabels.collectAsStateWithLifecycle()
     val labelNames = remember(labels) { labels.associate { it.id to it.name }.toImmutableMap() }
     val snackbar = remember { SnackbarHostState() }
@@ -142,19 +145,24 @@ fun NotesScreen(
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            if (state.loaded && state.pinned.isEmpty() && state.others.isEmpty()) {
-                EmptyState(state.section, searching = state.query.isNotBlank())
-            } else {
-                NotesGrid(
-                    state = state,
-                    labelNames = labelNames,
-                    onOpen = { id -> if (state.selection.isEmpty()) onOpenNote(id) else viewModel.toggleSelect(id) },
-                    onSelect = viewModel::toggleSelect,
-                    onDragStart = viewModel::select,
-                    onMove = viewModel::move,
-                    onEmptyTrash = { confirmEmptyTrash = true },
-                )
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            if (state.section == NotesSection.ACTIVE) {
+                AutoRestoreBanner(restoreState, onDismiss = autoRestoreViewModel::dismiss)
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                if (state.loaded && state.pinned.isEmpty() && state.others.isEmpty()) {
+                    EmptyState(state.section, searching = state.query.isNotBlank())
+                } else {
+                    NotesGrid(
+                        state = state,
+                        labelNames = labelNames,
+                        onOpen = { id -> if (state.selection.isEmpty()) onOpenNote(id) else viewModel.toggleSelect(id) },
+                        onSelect = viewModel::toggleSelect,
+                        onDragStart = viewModel::select,
+                        onMove = viewModel::move,
+                        onEmptyTrash = { confirmEmptyTrash = true },
+                    )
+                }
             }
         }
     }

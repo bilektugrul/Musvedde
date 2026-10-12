@@ -6,6 +6,7 @@ import dev.aliarslan.musvedde.data.backup.BackupAuthException
 import dev.aliarslan.musvedde.data.backup.BackupFile
 import dev.aliarslan.musvedde.data.backup.BackupTarget
 import dev.aliarslan.musvedde.data.backup.BackupTargetUnavailable
+import dev.aliarslan.musvedde.data.backup.SilentBackupSource
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -22,7 +23,7 @@ class DriveBackupTarget @Inject constructor(
     private val settings: SettingsRepository,
     private val auth: DriveAuth,
     private val api: DriveApi,
-) : BackupTarget {
+) : BackupTarget, SilentBackupSource {
 
     override val id = BackupTarget.DRIVE
 
@@ -44,6 +45,18 @@ class DriveBackupTarget @Inject constructor(
     override suspend fun open(file: BackupFile): InputStream = api.download(token(), file.ref)
 
     override suspend fun delete(file: BackupFile) = api.delete(token(), file.ref)
+
+    override suspend fun listSilently(): List<BackupFile>? {
+        val token = (auth.authorize() as? DriveAuthResult.Token)?.accessToken ?: return null
+        return api.list(token)
+    }
+
+    override suspend fun openSilently(file: BackupFile): InputStream {
+        val result = auth.authorize()
+        val token = (result as? DriveAuthResult.Token)?.accessToken
+            ?: throw BackupAuthException("Google Drive authorization is no longer available")
+        return api.download(token, file.ref)
+    }
 
     private suspend fun token(): String {
         if (!settings.settings.first().driveEnabled) throw BackupTargetUnavailable("Google Drive backup is turned off")
