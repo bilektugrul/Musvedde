@@ -10,7 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material3.FilterChip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
@@ -80,6 +84,9 @@ class StorageViewModel @Inject constructor(
 fun StorageScreen(onBack: () -> Unit, onOpenHistory: (Long) -> Unit, viewModel: StorageViewModel = hiltViewModel()) {
     val report by viewModel.report.collectAsStateWithLifecycle()
     var confirmClear by rememberSaveable { mutableStateOf(false) }
+    var sort by rememberSaveable { mutableStateOf(StorageSort.SIZE) }
+    var descending by rememberSaveable { mutableStateOf(true) }
+    val untitled = stringResource(R.string.notification_untitled)
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.refresh() }
 
     Scaffold(
@@ -109,7 +116,18 @@ fun StorageScreen(onBack: () -> Unit, onOpenHistory: (Long) -> Unit, viewModel: 
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
                 )
             }
-            items(current.notes, key = { it.id }) { row ->
+            item {
+                SortBar(
+                    sort = sort,
+                    descending = descending,
+                    onSort = { picked ->
+                        if (picked != sort) descending = picked != StorageSort.NAME
+                        sort = picked
+                    },
+                    onToggleDirection = { descending = !descending },
+                )
+            }
+            items(sortRows(current.notes, sort, descending, untitled), key = { it.id }) { row ->
                 NoteRow(row, onClick = { onOpenHistory(row.id) })
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             }
@@ -169,8 +187,7 @@ private fun SummaryLine(label: String, value: String) {
 @Composable
 private fun NoteRow(row: NoteStorageRow, onClick: () -> Unit) {
     val context = LocalContext.current
-    val untitled = stringResource(R.string.notification_untitled)
-    val name = row.title.ifBlank { row.preview.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty() }.ifBlank { untitled }
+    val name = row.displayName(stringResource(R.string.notification_untitled))
     val stateLabel = when (row.state) {
         NoteState.ARCHIVED.name -> stringResource(R.string.nav_archive)
         NoteState.TRASHED.name -> stringResource(R.string.nav_trash)
@@ -198,5 +215,43 @@ private fun NoteRow(row: NoteStorageRow, onClick: () -> Unit) {
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(start = 12.dp),
         )
+    }
+}
+
+@Composable
+private fun SortBar(sort: StorageSort, descending: Boolean, onSort: (StorageSort) -> Unit, onToggleDirection: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+            items(StorageSort.entries) { option ->
+                FilterChip(
+                    selected = option == sort,
+                    onClick = { onSort(option) },
+                    label = {
+                        Text(
+                            stringResource(
+                                when (option) {
+                                    StorageSort.SIZE -> R.string.storage_sort_size
+                                    StorageSort.NAME -> R.string.storage_sort_name
+                                    StorageSort.CONTENT_LENGTH -> R.string.storage_sort_length
+                                    StorageSort.DATE -> R.string.storage_sort_date
+                                },
+                            ),
+                        )
+                    },
+                )
+            }
+        }
+        val direction = when {
+            sort == StorageSort.DATE && descending -> R.string.storage_sort_newest_first
+            sort == StorageSort.DATE -> R.string.storage_sort_oldest_first
+            descending -> R.string.storage_sort_descending
+            else -> R.string.storage_sort_ascending
+        }
+        IconButton(onClick = onToggleDirection) {
+            Icon(
+                if (descending) Icons.Filled.ArrowDownward else Icons.Filled.ArrowUpward,
+                contentDescription = stringResource(direction),
+            )
+        }
     }
 }

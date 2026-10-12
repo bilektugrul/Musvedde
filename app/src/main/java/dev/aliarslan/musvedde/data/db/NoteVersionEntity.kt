@@ -44,6 +44,8 @@ data class NoteStorageRow(
     val noteBytes: Long,
     val versionCount: Int,
     val versionBytes: Long,
+    val contentLength: Int,
+    val createdAt: Long,
 )
 
 fun utf8Size(title: String, body: String): Long =
