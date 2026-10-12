@@ -254,7 +254,7 @@
     </plurals>
     <string name="event_emptied_to_trash">Boşaltılan not çöp kutusuna taşındı</string>
     <string name="note_empty">Boş not</string>
-    <string name="settings_summary_appearance">Tema, renkler, görünüm ve dil</string>
+    <string name="settings_summary_appearance">Tema, görünüm ve dil</string>
     <string name="settings_summary_accessibility">Yazı boyutu, yazı tipleri, aralık ve hareket</string>
     <string name="settings_summary_editor">Odak modu</string>
     <string name="settings_summary_notifications">Sabitlenmiş notlar ve izin</string>
@@ -295,4 +295,22 @@
     <string name="auto_restore_from">%s tarihli yedekten. Drive yedeklemesi açıldı.</string>
     <string name="auto_restore_failed">Google Drive yedeğin geri yüklenemedi</string>
     <string name="auto_restore_failed_hint">Ayarlar › Yedekleme\'den tekrar deneyebilirsin.</string>
+    <string name="settings_section_colors">Renkler ve Monet</string>
+    <string name="settings_summary_colors">Palet, vurgu rengi, parlaklık ve kontrast</string>
+    <string name="monet_accent">Vurgu rengi</string>
+    <string name="monet_custom_background">Arka plan rengi</string>
+    <string name="monet_custom_background_summary">Arka plan için özel renk seç</string>
+    <string name="monet_background">Özel renk</string>
+    <string name="monet_luminance">Parlaklık</string>
+    <string name="monet_luminance_summary">Daha yüksek değerler daha parlak renkler üretir</string>
+    <string name="monet_chroma">Berraklık</string>
+    <string name="monet_chroma_summary">Daha yüksek değerler daha güçlü renkler üretir</string>
+    <string name="monet_whole_palette">Tüm palet</string>
+    <string name="monet_whole_palette_summary">Parlaklık ve berraklık arka plan renklerini de etkilesin</string>
+    <string name="monet_tinted_background">Renkli arka plan</string>
+    <string name="monet_tinted_background_summary">Arka plan düz gri yerine paletin renginden bir ton alsın</string>
+    <string name="color_hex">Hex kodu</string>
+    <string name="color_hue">Ton</string>
+    <string name="color_saturation">Doygunluk</string>
+    <string name="color_value">Parlaklık</string>
 </resources>

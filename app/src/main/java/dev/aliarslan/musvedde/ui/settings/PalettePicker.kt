@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -35,7 +37,7 @@ import dev.aliarslan.musvedde.domain.PaletteStyleOption
 import dev.aliarslan.musvedde.domain.ThemePalette
 
 @Composable
-fun PalettePicker(selected: ThemePalette, onSelect: (ThemePalette) -> Unit) {
+fun PalettePicker(selected: ThemePalette, customAccent: Int, onSelect: (ThemePalette) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
         Text(
             stringResource(R.string.settings_palette),
@@ -55,16 +57,24 @@ fun PalettePicker(selected: ThemePalette, onSelect: (ThemePalette) -> Unit) {
                 .padding(horizontal = 24.dp, vertical = 12.dp),
         ) {
             ThemePalette.entries.forEach { palette ->
-                Swatch(palette, palette == selected, paletteLabel(palette)) { onSelect(palette) }
+                Swatch(palette, customAccent, palette == selected, paletteLabel(palette)) { onSelect(palette) }
             }
         }
     }
 }
 
 @Composable
-private fun Swatch(palette: ThemePalette, selected: Boolean, label: String, onClick: () -> Unit) {
-    val fill = palette.seed?.let { Color(it) } ?: MaterialTheme.colorScheme.secondaryContainer
-    val content = if (palette.seed == null) MaterialTheme.colorScheme.onSecondaryContainer else Color.White
+private fun Swatch(palette: ThemePalette, customAccent: Int, selected: Boolean, label: String, onClick: () -> Unit) {
+    val fill = when (palette) {
+        ThemePalette.WALLPAPER -> MaterialTheme.colorScheme.secondaryContainer
+        ThemePalette.CUSTOM -> Color(customAccent)
+        else -> Color(palette.seed!!)
+    }
+    val content = when {
+        palette == ThemePalette.WALLPAPER -> MaterialTheme.colorScheme.onSecondaryContainer
+        fill.luminance() > 0.5f -> Color.Black
+        else -> Color.White
+    }
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -77,7 +87,8 @@ private fun Swatch(palette: ThemePalette, selected: Boolean, label: String, onCl
     ) {
         when {
             selected -> Icon(Icons.Outlined.Check, contentDescription = null, tint = content)
-            palette.seed == null -> Icon(Icons.Outlined.Wallpaper, contentDescription = null, tint = content)
+            palette == ThemePalette.WALLPAPER -> Icon(Icons.Outlined.Wallpaper, contentDescription = null, tint = content)
+            palette == ThemePalette.CUSTOM -> Icon(Icons.Outlined.Colorize, contentDescription = null, tint = content)
         }
     }
 }

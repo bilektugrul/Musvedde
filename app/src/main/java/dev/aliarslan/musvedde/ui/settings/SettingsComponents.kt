@@ -135,6 +135,7 @@ fun SliderRow(
     step: Float,
     format: (Float) -> String,
     defaultValue: Float? = null,
+    summary: String? = null,
     onValueChangeFinished: (Float) -> Unit,
 ) {
     var current by remember(value) { mutableFloatStateOf(value) }
@@ -143,6 +144,9 @@ fun SliderRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             Text(format(current), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (summary != null) {
+            Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Slider(
             value = current,

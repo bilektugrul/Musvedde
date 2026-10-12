@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
@@ -64,10 +65,12 @@ import dev.aliarslan.musvedde.domain.ContrastLevel
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.ListLayout
+import dev.aliarslan.musvedde.domain.MonetTuning
 import dev.aliarslan.musvedde.domain.PaletteStyleOption
 import dev.aliarslan.musvedde.domain.PreviewSize
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
+import dev.aliarslan.musvedde.domain.ThemePalette
 import dev.aliarslan.musvedde.notification.hasNotificationPermission
 import java.text.DateFormat
 import java.util.Date
@@ -166,6 +169,7 @@ fun SettingsCategoryScreen(
             item {
                 when (category) {
                     SettingsCategory.APPEARANCE -> AppearanceSection(s, viewModel::update)
+                    SettingsCategory.COLORS -> ColorsSection(s, viewModel::update)
                     SettingsCategory.ACCESSIBILITY -> AccessibilitySection(s, viewModel::update)
                     SettingsCategory.EDITOR -> EditorSection(s, viewModel::update)
                     SettingsCategory.NOTIFICATIONS -> NotificationsSection(s, viewModel::update)
@@ -225,6 +229,7 @@ fun SettingsCategoryScreen(
 
 private fun SettingsCategory.titleRes() = when (this) {
     SettingsCategory.APPEARANCE -> R.string.settings_section_appearance
+    SettingsCategory.COLORS -> R.string.settings_section_colors
     SettingsCategory.ACCESSIBILITY -> R.string.settings_section_accessibility
     SettingsCategory.EDITOR -> R.string.settings_section_editor
     SettingsCategory.NOTIFICATIONS -> R.string.settings_section_notifications
@@ -236,6 +241,7 @@ private fun SettingsCategory.titleRes() = when (this) {
 
 private fun SettingsCategory.summaryRes() = when (this) {
     SettingsCategory.APPEARANCE -> R.string.settings_summary_appearance
+    SettingsCategory.COLORS -> R.string.settings_summary_colors
     SettingsCategory.ACCESSIBILITY -> R.string.settings_summary_accessibility
     SettingsCategory.EDITOR -> R.string.settings_summary_editor
     SettingsCategory.NOTIFICATIONS -> R.string.settings_summary_notifications
@@ -246,7 +252,8 @@ private fun SettingsCategory.summaryRes() = when (this) {
 }
 
 private fun SettingsCategory.icon(): ImageVector = when (this) {
-    SettingsCategory.APPEARANCE -> Icons.Outlined.Palette
+    SettingsCategory.APPEARANCE -> Icons.Outlined.DarkMode
+    SettingsCategory.COLORS -> Icons.Outlined.Palette
     SettingsCategory.ACCESSIBILITY -> Icons.Outlined.Accessibility
     SettingsCategory.EDITOR -> Icons.Outlined.EditNote
     SettingsCategory.NOTIFICATIONS -> Icons.Outlined.Notifications
@@ -274,7 +281,26 @@ private fun AppearanceSection(s: Settings, update: ((Settings) -> Settings) -> U
         },
         onSelect = { mode -> update { it.copy(themeMode = mode) } },
     )
-    PalettePicker(s.themePalette) { palette -> update { it.copy(themePalette = palette) } }
+    ChoiceRow(
+        title = stringResource(R.string.settings_layout),
+        options = ListLayout.entries,
+        selected = s.listLayout,
+        label = { stringResource(if (it == ListLayout.GRID) R.string.action_grid_view else R.string.action_list_view) },
+        onSelect = { layout -> update { it.copy(listLayout = layout) } },
+    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) LanguageRow()
+}
+
+@Composable
+private fun ColorsSection(s: Settings, update: ((Settings) -> Settings) -> Unit) {
+    val monet = s.monet
+    fun tune(transform: (MonetTuning) -> MonetTuning) = update { it.copy(monet = transform(it.monet)) }
+    PalettePicker(s.themePalette, monet.accentColor) { palette -> update { it.copy(themePalette = palette) } }
+    if (s.themePalette == ThemePalette.CUSTOM) {
+        ColorSettingRow(stringResource(R.string.monet_accent), monet.accentColor, MonetTuning.DEFAULT_ACCENT) { color ->
+            tune { it.copy(accentColor = color) }
+        }
+    }
     ChoiceRow(
         title = stringResource(R.string.settings_palette_style),
         options = PaletteStyleOption.entries,
@@ -289,14 +315,40 @@ private fun AppearanceSection(s: Settings, update: ((Settings) -> Settings) -> U
         label = { contrastLabel(it) },
         onSelect = { contrast -> update { it.copy(contrast = contrast) } },
     )
-    ChoiceRow(
-        title = stringResource(R.string.settings_layout),
-        options = ListLayout.entries,
-        selected = s.listLayout,
-        label = { stringResource(if (it == ListLayout.GRID) R.string.action_grid_view else R.string.action_list_view) },
-        onSelect = { layout -> update { it.copy(listLayout = layout) } },
+    SwitchRow(stringResource(R.string.monet_custom_background), monet.customBackground, stringResource(R.string.monet_custom_background_summary)) { v ->
+        tune { it.copy(customBackground = v) }
+    }
+    if (monet.customBackground) {
+        ColorSettingRow(stringResource(R.string.monet_background), monet.backgroundColor, MonetTuning.DEFAULT_BACKGROUND) { color ->
+            tune { it.copy(backgroundColor = color) }
+        }
+    }
+    SliderRow(
+        title = stringResource(R.string.monet_luminance),
+        value = monet.luminance.toFloat(),
+        range = MonetTuning.RANGE.first.toFloat()..MonetTuning.RANGE.last.toFloat(),
+        step = 5f,
+        format = { "%+d %%".format(it.roundToInt()) },
+        defaultValue = 0f,
+        summary = stringResource(R.string.monet_luminance_summary),
+        onValueChangeFinished = { v -> tune { it.copy(luminance = v.roundToInt()) } },
     )
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) LanguageRow()
+    SliderRow(
+        title = stringResource(R.string.monet_chroma),
+        value = monet.chroma.toFloat(),
+        range = MonetTuning.RANGE.first.toFloat()..MonetTuning.RANGE.last.toFloat(),
+        step = 5f,
+        format = { "%+d %%".format(it.roundToInt()) },
+        defaultValue = 0f,
+        summary = stringResource(R.string.monet_chroma_summary),
+        onValueChangeFinished = { v -> tune { it.copy(chroma = v.roundToInt()) } },
+    )
+    SwitchRow(stringResource(R.string.monet_whole_palette), monet.wholePalette, stringResource(R.string.monet_whole_palette_summary)) { v ->
+        tune { it.copy(wholePalette = v) }
+    }
+    SwitchRow(stringResource(R.string.monet_tinted_background), monet.tintedBackground, stringResource(R.string.monet_tinted_background_summary)) { v ->
+        tune { it.copy(tintedBackground = v) }
+    }
 }
 
 @Composable

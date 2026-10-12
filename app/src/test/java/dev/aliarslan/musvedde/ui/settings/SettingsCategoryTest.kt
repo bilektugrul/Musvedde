@@ -53,12 +53,20 @@ class SettingsCategoryTest {
         val reset = SettingsCategory.APPEARANCE.reset(changed)!!
 
         assertThat(reset.themeMode).isEqualTo(ThemeMode.SYSTEM)
+        assertThat(reset.listLayout).isEqualTo(ListLayout.GRID)
+        assertThat(reset.themePalette).isEqualTo(ThemePalette.OCEAN)
+        assertThat(reset.editorFontSizeSp).isEqualTo(26f)
+    }
+
+    @Test
+    fun colorsResetRestoresPaletteAndMonetTuning() {
+        val reset = SettingsCategory.COLORS.reset(changed)!!
+
         assertThat(reset.themePalette).isEqualTo(ThemePalette.WALLPAPER)
         assertThat(reset.paletteStyle).isEqualTo(PaletteStyleOption.TONAL_SPOT)
         assertThat(reset.contrast).isEqualTo(ContrastLevel.STANDARD)
         assertThat(reset.monet).isEqualTo(MonetTuning())
-        assertThat(reset.listLayout).isEqualTo(ListLayout.GRID)
-        assertThat(reset.editorFontSizeSp).isEqualTo(26f)
+        assertThat(reset.themeMode).isEqualTo(ThemeMode.AMOLED)
     }
 
     @Test

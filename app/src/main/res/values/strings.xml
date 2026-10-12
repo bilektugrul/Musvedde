@@ -255,7 +255,7 @@
     </plurals>
     <string name="event_emptied_to_trash">Emptied note moved to trash</string>
     <string name="note_empty">Empty note</string>
-    <string name="settings_summary_appearance">Theme, colors, layout and language</string>
+    <string name="settings_summary_appearance">Theme, layout and language</string>
     <string name="settings_summary_accessibility">Text size, fonts, spacing and motion</string>
     <string name="settings_summary_editor">Focus mode</string>
     <string name="settings_summary_notifications">Pinned notes and permission</string>
@@ -296,4 +296,22 @@
     <string name="auto_restore_from">From the backup of %s. Drive backup is now on.</string>
     <string name="auto_restore_failed">Couldn\'t restore your Google Drive backup</string>
     <string name="auto_restore_failed_hint">You can try again from Settings › Backup.</string>
+    <string name="settings_section_colors">Colors &amp; Monet</string>
+    <string name="settings_summary_colors">Palette, accent color, brightness and contrast</string>
+    <string name="monet_accent">Accent color</string>
+    <string name="monet_custom_background">Background color</string>
+    <string name="monet_custom_background_summary">Pick your own color for the background</string>
+    <string name="monet_background">Custom color</string>
+    <string name="monet_luminance">Brightness</string>
+    <string name="monet_luminance_summary">Higher values make brighter colors</string>
+    <string name="monet_chroma">Colorfulness</string>
+    <string name="monet_chroma_summary">Higher values make stronger colors</string>
+    <string name="monet_whole_palette">Whole palette</string>
+    <string name="monet_whole_palette_summary">Let brightness and colorfulness change the background colors too</string>
+    <string name="monet_tinted_background">Tinted background</string>
+    <string name="monet_tinted_background_summary">Give the background a hint of the palette color instead of plain gray</string>
+    <string name="color_hex">Hex code</string>
+    <string name="color_hue">Hue</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_value">Brightness</string>
 </resources>

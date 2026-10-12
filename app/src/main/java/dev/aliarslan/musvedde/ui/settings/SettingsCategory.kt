@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class SettingsCategory {
     APPEARANCE,
+    COLORS,
     ACCESSIBILITY,
     EDITOR,
     NOTIFICATIONS,
@@ -21,13 +22,12 @@ enum class SettingsCategory {
     fun reset(settings: Settings): Settings? {
         val d = DEFAULTS
         return when (this) {
-            APPEARANCE -> settings.copy(
-                themeMode = d.themeMode,
+            APPEARANCE -> settings.copy(themeMode = d.themeMode, listLayout = d.listLayout)
+            COLORS -> settings.copy(
                 themePalette = d.themePalette,
                 paletteStyle = d.paletteStyle,
                 contrast = d.contrast,
                 monet = d.monet,
-                listLayout = d.listLayout,
             )
             ACCESSIBILITY -> settings.copy(
                 uiTextScale = d.uiTextScale,
