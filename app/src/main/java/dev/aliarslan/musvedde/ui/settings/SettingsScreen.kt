@@ -146,6 +146,8 @@ fun SettingsCategoryScreen(
                 is SettingsEvent.Restored ->
                     snackbar.showSnackbar(resources.getQuantityString(R.plurals.restore_done, event.count, event.count))
                 is SettingsEvent.RestoreFailed -> snackbar.showSnackbar(resources.getString(R.string.restore_failed, event.message))
+                is SettingsEvent.KeepImported ->
+                    snackbar.showSnackbar(resources.getQuantityString(R.plurals.keep_imported, event.count, event.count))
             }
         }
     }
@@ -572,6 +574,12 @@ private fun BackupSection(
         OutlinedButton(onClick = onRestore, enabled = !restoring) {
             Text(stringResource(R.string.backup_restore))
         }
+    }
+    val keepPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) viewModel.importKeep(uri)
+    }
+    ActionRow(stringResource(R.string.keep_import), stringResource(R.string.keep_import_summary), enabled = !restoring) {
+        keepPicker.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
     }
 }
 

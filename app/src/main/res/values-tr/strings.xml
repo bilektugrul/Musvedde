@@ -313,4 +313,10 @@
     <string name="color_hue">Ton</string>
     <string name="color_saturation">Doygunluk</string>
     <string name="color_value">Parlaklık</string>
+    <string name="keep_import">Google Keep\'ten içe aktar</string>
+    <string name="keep_import_summary">takeout.google.com adresinden Keep\'i dışa aktar, sonra indirdiğin zip dosyasını seç. Notlar mevcutların yanına eklenir; listeler ☐ / ☑ satırlarına dönüşür.</string>
+    <plurals name="keep_imported">
+        <item quantity="one">Google Keep\'ten 1 not aktarıldı</item>
+        <item quantity="other">Google Keep\'ten %d not aktarıldı</item>
+    </plurals>
 </resources>

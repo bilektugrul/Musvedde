@@ -1,6 +1,7 @@
 package dev.aliarslan.musvedde.ui.settings
 
 import android.content.Context
+import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.WorkInfo
@@ -12,6 +13,7 @@ import dev.aliarslan.musvedde.core.Clock
 import dev.aliarslan.musvedde.data.backup.BackupManager
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.backup.BackupSerializer
+import dev.aliarslan.musvedde.data.backup.KeepImporter
 import dev.aliarslan.musvedde.data.backup.RecordingLogger
 import dev.aliarslan.musvedde.data.backup.RestoreService
 import dev.aliarslan.musvedde.data.backup.drive.DriveAuth
@@ -28,6 +30,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -40,6 +43,8 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -91,6 +96,7 @@ class SettingsViewModelTest {
                 safetyDir = tmp.newFolder("safety"),
             ),
             restoreService = RestoreService(db, serializer),
+            keepImporter = KeepImporter(clock),
             driveAuth = DriveAuth(context),
             logger = logger,
             workManager = workManager,
@@ -136,6 +142,34 @@ class SettingsViewModelTest {
         val active = workManager.getWorkInfosForUniqueWork(BackupScheduler.PERIODIC).get()
             .filter { it.state != WorkInfo.State.CANCELLED }
         assertThat(active).isEmpty()
+    }
+
+    private fun TestScope.awaitRestore(vm: SettingsViewModel) {
+        repeat(500) {
+            advanceUntilIdle()
+            if (!vm.restoring.value) return
+            Thread.sleep(10)
+        }
+        error("Import did not finish")
+    }
+
+    @Test
+    fun importingKeepAddsItsNotesOnce() = runTest(dispatcher) {
+        val export = tmp.newFile("takeout.zip")
+        ZipOutputStream(export.outputStream()).use { zip ->
+            zip.putNextEntry(ZipEntry("Takeout/Keep/not.json"))
+            zip.write("""{"title":"Keep","textContent":"satır","userEditedTimestampUsec":5000000}""".toByteArray())
+            zip.closeEntry()
+        }
+        val vm = viewModel()
+
+        repeat(2) {
+            vm.importKeep(Uri.fromFile(export))
+            awaitRestore(vm)
+        }
+
+        assertThat(db.noteDao().count()).isEqualTo(1)
+        assertThat(vm.restoring.value).isFalse()
     }
 
     @Test

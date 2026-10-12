@@ -314,4 +314,10 @@
     <string name="color_hue">Hue</string>
     <string name="color_saturation">Saturation</string>
     <string name="color_value">Brightness</string>
+    <string name="keep_import">Import from Google Keep</string>
+    <string name="keep_import_summary">Export Keep at takeout.google.com, then pick the downloaded zip. Notes are added next to the ones you have; lists become ☐ / ☑ lines.</string>
+    <plurals name="keep_imported">
+        <item quantity="one">Imported 1 note from Google Keep</item>
+        <item quantity="other">Imported %d notes from Google Keep</item>
+    </plurals>
 </resources>

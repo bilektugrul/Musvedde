@@ -16,6 +16,7 @@ import dev.aliarslan.musvedde.data.backup.BackupFile
 import dev.aliarslan.musvedde.data.backup.BackupManager
 import dev.aliarslan.musvedde.data.backup.BackupScheduler
 import dev.aliarslan.musvedde.data.backup.BackupSerializer
+import dev.aliarslan.musvedde.data.backup.KeepImporter
 import dev.aliarslan.musvedde.data.backup.RestoreMode
 import dev.aliarslan.musvedde.data.backup.RestoreService
 import dev.aliarslan.musvedde.data.backup.drive.DriveAuth
@@ -48,6 +49,7 @@ sealed interface SettingsEvent {
     data class DriveFailed(val message: String) : SettingsEvent
     data class Restored(val count: Int) : SettingsEvent
     data class RestoreFailed(val message: String) : SettingsEvent
+    data class KeepImported(val count: Int) : SettingsEvent
 }
 
 @HiltViewModel
@@ -57,6 +59,7 @@ class SettingsViewModel @Inject constructor(
     private val scheduler: BackupScheduler,
     private val backupManager: BackupManager,
     private val restoreService: RestoreService,
+    private val keepImporter: KeepImporter,
     private val driveAuth: DriveAuth,
     private val logger: ErrorLogger,
     workManager: WorkManager,
@@ -158,6 +161,27 @@ class SettingsViewModel @Inject constructor(
 
     fun restore(uri: Uri, mode: RestoreMode) = restore(mode) {
         withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri) } ?: error("Could not open the file")
+    }
+
+    fun importKeep(uri: Uri) {
+        _restoring.value = true
+        appScope.launch {
+            try {
+                runCatching {
+                    val content = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { keepImporter.read(it) }
+                    } ?: error("Could not open the file")
+                    restoreService.restore(content, RestoreMode.MERGE).getOrThrow()
+                }
+                    .onSuccess { eventChannel.send(SettingsEvent.KeepImported(it)) }
+                    .onFailure {
+                        logger.error("Keep", "Importing from Google Keep failed: ${it.message}", it)
+                        eventChannel.send(SettingsEvent.RestoreFailed(it.message ?: it.javaClass.simpleName))
+                    }
+            } finally {
+                _restoring.value = false
+            }
+        }
     }
 
     private fun restore(mode: RestoreMode, open: suspend () -> InputStream) {
