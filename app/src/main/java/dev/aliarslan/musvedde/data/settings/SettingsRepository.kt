@@ -11,6 +11,9 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
+import dev.aliarslan.musvedde.domain.ContrastLevel
+import dev.aliarslan.musvedde.domain.PaletteStyleOption
+import dev.aliarslan.musvedde.domain.ThemePalette
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.ListLayout
@@ -35,7 +38,10 @@ class SettingsRepository @Inject constructor(
 
     private object Keys {
         val themeMode = stringPreferencesKey("themeMode")
-        val dynamicColor = booleanPreferencesKey("dynamicColor")
+        val legacyDynamicColor = booleanPreferencesKey("dynamicColor")
+        val themePalette = stringPreferencesKey("themePalette")
+        val paletteStyle = stringPreferencesKey("paletteStyle")
+        val contrast = stringPreferencesKey("contrast")
         val listLayout = stringPreferencesKey("listLayout")
         val uiTextScale = floatPreferencesKey("uiTextScale")
         val editorFontSizeSp = floatPreferencesKey("editorFontSizeSp")
@@ -64,7 +70,10 @@ class SettingsRepository @Inject constructor(
         val d = Settings()
         return Settings(
             themeMode = enumOr(this[Keys.themeMode], d.themeMode),
-            dynamicColor = this[Keys.dynamicColor] ?: d.dynamicColor,
+            themePalette = this[Keys.themePalette]?.let { enumOr(it, d.themePalette) }
+                ?: if (this[Keys.legacyDynamicColor] == false) ThemePalette.PAPER else d.themePalette,
+            paletteStyle = enumOr(this[Keys.paletteStyle], d.paletteStyle),
+            contrast = enumOr(this[Keys.contrast], d.contrast),
             listLayout = enumOr(this[Keys.listLayout], d.listLayout),
             uiTextScale = this[Keys.uiTextScale] ?: d.uiTextScale,
             editorFontSizeSp = this[Keys.editorFontSizeSp] ?: d.editorFontSizeSp,
@@ -92,7 +101,9 @@ class SettingsRepository @Inject constructor(
 
     private fun MutablePreferences.write(s: Settings) {
         this[Keys.themeMode] = s.themeMode.name
-        this[Keys.dynamicColor] = s.dynamicColor
+        this[Keys.themePalette] = s.themePalette.name
+        this[Keys.paletteStyle] = s.paletteStyle.name
+        this[Keys.contrast] = s.contrast.name
         this[Keys.listLayout] = s.listLayout.name
         this[Keys.uiTextScale] = s.uiTextScale
         this[Keys.editorFontSizeSp] = s.editorFontSizeSp

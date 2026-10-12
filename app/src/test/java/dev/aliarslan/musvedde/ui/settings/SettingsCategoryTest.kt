@@ -3,6 +3,9 @@ package dev.aliarslan.musvedde.ui.settings
 import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
+import dev.aliarslan.musvedde.domain.ContrastLevel
+import dev.aliarslan.musvedde.domain.PaletteStyleOption
+import dev.aliarslan.musvedde.domain.ThemePalette
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.ListLayout
 import dev.aliarslan.musvedde.domain.Settings
@@ -12,7 +15,9 @@ import org.junit.Test
 class SettingsCategoryTest {
     private val changed = Settings(
         themeMode = ThemeMode.AMOLED,
-        dynamicColor = false,
+        themePalette = ThemePalette.OCEAN,
+        paletteStyle = PaletteStyleOption.VIBRANT,
+        contrast = ContrastLevel.HIGH,
         listLayout = ListLayout.LIST,
         uiTextScale = 1.3f,
         editorFontSizeSp = 26f,
@@ -46,7 +51,9 @@ class SettingsCategoryTest {
         val reset = SettingsCategory.APPEARANCE.reset(changed)!!
 
         assertThat(reset.themeMode).isEqualTo(ThemeMode.SYSTEM)
-        assertThat(reset.dynamicColor).isTrue()
+        assertThat(reset.themePalette).isEqualTo(ThemePalette.WALLPAPER)
+        assertThat(reset.paletteStyle).isEqualTo(PaletteStyleOption.TONAL_SPOT)
+        assertThat(reset.contrast).isEqualTo(ContrastLevel.STANDARD)
         assertThat(reset.listLayout).isEqualTo(ListLayout.GRID)
         assertThat(reset.editorFontSizeSp).isEqualTo(26f)
     }

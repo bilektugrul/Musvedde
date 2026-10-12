@@ -1,5 +1,7 @@
 package dev.aliarslan.musvedde.ui.theme
 
+import android.app.WallpaperManager
+import android.content.Context
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -23,6 +25,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
+import dev.aliarslan.musvedde.domain.ThemePalette
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF6E5530),
@@ -82,10 +85,11 @@ fun isDarkTheme(mode: ThemeMode, systemDark: Boolean): Boolean = when (mode) {
     ThemeMode.DARK, ThemeMode.AMOLED -> true
 }
 
-fun colorSchemeFor(mode: ThemeMode, systemDark: Boolean, dynamic: ColorScheme? = null): ColorScheme {
-    val dark = isDarkTheme(mode, systemDark)
-    val base = dynamic ?: if (dark) DarkColors else LightColors
-    return if (mode == ThemeMode.AMOLED) base.amoled() else base
+internal fun paperScheme(dark: Boolean): ColorScheme = if (dark) DarkColors else LightColors
+
+fun colorSchemeFor(mode: ThemeMode, systemDark: Boolean, base: ColorScheme? = null): ColorScheme {
+    val scheme = base ?: paperScheme(isDarkTheme(mode, systemDark))
+    return if (mode == ThemeMode.AMOLED) scheme.amoled() else scheme
 }
 
 private fun ColorScheme.amoled() = copy(
@@ -104,13 +108,16 @@ fun MusveddeTheme(settings: Settings, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val systemDark = isSystemInDarkTheme()
     val dark = isDarkTheme(settings.themeMode, systemDark)
-    val dynamic = if (settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    val wantsWallpaper = settings.themePalette == ThemePalette.WALLPAPER
+    val systemDynamic = if (wantsWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
         null
     }
-    val scheme = remember(settings.themeMode, systemDark, dynamic) {
-        colorSchemeFor(settings.themeMode, systemDark, dynamic)
+    val wallpaperSeed = remember(wantsWallpaper) { if (wantsWallpaper) wallpaperSeedColor(context) else null }
+    val scheme = remember(settings.themeMode, settings.themePalette, settings.paletteStyle, settings.contrast, dark, systemDynamic, wallpaperSeed) {
+        val base = buildColorScheme(settings.themePalette, settings.paletteStyle, settings.contrast, dark, wallpaperSeed, systemDynamic)
+        colorSchemeFor(settings.themeMode, systemDark, base)
     }
 
     SystemBarsEffect(dark, scheme.background)
@@ -135,6 +142,10 @@ fun MusveddeTheme(settings: Settings, content: @Composable () -> Unit) {
         MaterialTheme(colorScheme = scheme, typography = MusveddeTypography, content = content)
     }
 }
+
+private fun wallpaperSeedColor(context: Context): Int? = runCatching {
+    WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)?.primaryColor?.toArgb()
+}.getOrNull()
 
 @Composable
 private fun SystemBarsEffect(dark: Boolean, background: Color) {

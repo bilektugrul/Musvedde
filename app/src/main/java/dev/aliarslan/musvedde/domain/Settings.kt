@@ -2,6 +2,22 @@ package dev.aliarslan.musvedde.domain
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
 
+/** Where the app's colors come from: the wallpaper (Monet) or a fixed seed color. */
+enum class ThemePalette(val seed: Long?) {
+    WALLPAPER(null),
+    PAPER(0xFF6E5530),
+    OCEAN(0xFF1E6FB5),
+    FOREST(0xFF2E7D4F),
+    LAVENDER(0xFF7E57C2),
+    ROSE(0xFFC2185B),
+    SUNSET(0xFFE65100),
+    SLATE(0xFF546E7A),
+}
+
+enum class PaletteStyleOption { TONAL_SPOT, VIBRANT, EXPRESSIVE, RAINBOW, FRUIT_SALAD, NEUTRAL, MONOCHROME, FIDELITY, CONTENT }
+
+enum class ContrastLevel(val value: Double) { STANDARD(0.0), MEDIUM(0.5), HIGH(1.0) }
+
 enum class ListLayout { GRID, LIST }
 
 enum class EditorFont { SERIF, SYSTEM, GOOGLE_SANS, MONO }
@@ -16,7 +32,9 @@ enum class AnimationSpeed(val factor: Float) { SLOW(1.8f), NORMAL(1.35f), FAST(1
 
 data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val dynamicColor: Boolean = true,
+    val themePalette: ThemePalette = ThemePalette.WALLPAPER,
+    val paletteStyle: PaletteStyleOption = PaletteStyleOption.TONAL_SPOT,
+    val contrast: ContrastLevel = ContrastLevel.STANDARD,
     val listLayout: ListLayout = ListLayout.GRID,
     val uiTextScale: Float = 1.0f,
     val editorFontSizeSp: Float = 18f,

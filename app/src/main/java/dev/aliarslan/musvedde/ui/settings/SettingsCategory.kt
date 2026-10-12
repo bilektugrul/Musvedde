@@ -21,7 +21,13 @@ enum class SettingsCategory {
     fun reset(settings: Settings): Settings? {
         val d = DEFAULTS
         return when (this) {
-            APPEARANCE -> settings.copy(themeMode = d.themeMode, dynamicColor = d.dynamicColor, listLayout = d.listLayout)
+            APPEARANCE -> settings.copy(
+                themeMode = d.themeMode,
+                themePalette = d.themePalette,
+                paletteStyle = d.paletteStyle,
+                contrast = d.contrast,
+                listLayout = d.listLayout,
+            )
             ACCESSIBILITY -> settings.copy(
                 uiTextScale = d.uiTextScale,
                 editorFontSizeSp = d.editorFontSizeSp,

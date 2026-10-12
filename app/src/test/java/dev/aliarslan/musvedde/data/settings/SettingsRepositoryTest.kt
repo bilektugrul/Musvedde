@@ -6,6 +6,7 @@ import dev.aliarslan.musvedde.domain.BackupFrequency
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
+import dev.aliarslan.musvedde.domain.ThemePalette
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -19,7 +20,7 @@ class SettingsRepositoryTest {
 
         assertThat(settings).isEqualTo(Settings())
         assertThat(settings.themeMode).isEqualTo(ThemeMode.SYSTEM)
-        assertThat(settings.dynamicColor).isTrue()
+        assertThat(settings.themePalette).isEqualTo(ThemePalette.WALLPAPER)
         assertThat(settings.editorFontSizeSp).isEqualTo(18f)
         assertThat(settings.editorLineHeight).isEqualTo(1.5f)
         assertThat(settings.editorFont).isEqualTo(EditorFont.SERIF)

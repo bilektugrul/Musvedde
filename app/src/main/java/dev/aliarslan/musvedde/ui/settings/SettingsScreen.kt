@@ -60,9 +60,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.aliarslan.musvedde.R
 import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
+import dev.aliarslan.musvedde.domain.ContrastLevel
 import dev.aliarslan.musvedde.domain.EditorAlign
 import dev.aliarslan.musvedde.domain.EditorFont
 import dev.aliarslan.musvedde.domain.ListLayout
+import dev.aliarslan.musvedde.domain.PaletteStyleOption
 import dev.aliarslan.musvedde.domain.PreviewSize
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
@@ -272,11 +274,21 @@ private fun AppearanceSection(s: Settings, update: ((Settings) -> Settings) -> U
         },
         onSelect = { mode -> update { it.copy(themeMode = mode) } },
     )
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        SwitchRow(stringResource(R.string.settings_dynamic_color), s.dynamicColor, stringResource(R.string.settings_dynamic_color_summary)) { v ->
-            update { it.copy(dynamicColor = v) }
-        }
-    }
+    PalettePicker(s.themePalette) { palette -> update { it.copy(themePalette = palette) } }
+    ChoiceRow(
+        title = stringResource(R.string.settings_palette_style),
+        options = PaletteStyleOption.entries,
+        selected = s.paletteStyle,
+        label = { paletteStyleLabel(it) },
+        onSelect = { style -> update { it.copy(paletteStyle = style) } },
+    )
+    ChoiceRow(
+        title = stringResource(R.string.settings_contrast),
+        options = ContrastLevel.entries,
+        selected = s.contrast,
+        label = { contrastLabel(it) },
+        onSelect = { contrast -> update { it.copy(contrast = contrast) } },
+    )
     ChoiceRow(
         title = stringResource(R.string.settings_layout),
         options = ListLayout.entries,
