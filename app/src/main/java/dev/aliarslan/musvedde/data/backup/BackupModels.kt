@@ -25,7 +25,6 @@ data class BackupNote(
     val trashedAt: Long? = null,
     val labelNames: List<String> = emptyList(),
     val versions: List<BackupVersion> = emptyList(),
-    val hidden: Boolean = false,
     val locked: Boolean = false,
 )
 

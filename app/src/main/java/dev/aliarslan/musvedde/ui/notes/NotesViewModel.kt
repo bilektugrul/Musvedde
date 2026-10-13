@@ -58,8 +58,7 @@ data class NotesUiState(
     val selectedColor: NoteColor? = null,
     val query: String = "",
     val canReorder: Boolean = false,
-    /** Every selected note is hidden from the main page / in the secret folder; the actions then undo that. */
-    val selectionHidden: Boolean = false,
+    /** Every selected note is in the secret folder; the action then moves them out. */
     val selectionLocked: Boolean = false,
 )
 
@@ -127,7 +126,6 @@ class NotesViewModel @Inject constructor(
             selectedColor = list.filter { it.id in selected }.map { it.color }.distinct().singleOrNull(),
             query = q,
             canReorder = q.isBlank() && section == NotesSection.ACTIVE,
-            selectionHidden = selectedNotes.isNotEmpty() && selectedNotes.all { it.hidden },
             selectionLocked = selectedNotes.isNotEmpty() && selectedNotes.all { it.locked },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotesUiState(section, labelId))
@@ -180,11 +178,6 @@ class NotesViewModel @Inject constructor(
     }
 
     fun labelSelected(labelId: Long, add: Boolean) = onSelection(clear = false) { labels.setLabel(it, labelId, add) }
-
-    fun toggleHiddenSelected() {
-        val hide = !uiState.value.selectionHidden
-        onSelection { notes.setHidden(it, hide) }
-    }
 
     fun toggleLockedSelected() {
         val lock = !uiState.value.selectionLocked

@@ -127,8 +127,6 @@ fun NotesScreen(
                     onColor = { showColors = true },
                     onLabel = { showLabels = true },
                     onArchive = viewModel::archiveSelected,
-                    selectionHidden = state.selectionHidden,
-                    onToggleHidden = viewModel::toggleHiddenSelected,
                     selectionLocked = state.selectionLocked,
                     onToggleLocked = { requirePin { viewModel.toggleLockedSelected() } },
                     onTrash = viewModel::trashSelected,

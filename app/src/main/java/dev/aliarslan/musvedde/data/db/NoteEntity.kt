@@ -27,7 +27,6 @@ data class NoteEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val trashedAt: Long?,
-    @ColumnInfo(defaultValue = "0") val hidden: Boolean = false,
     /** The note lives in the secret folder. */
     @ColumnInfo(defaultValue = "0") val locked: Boolean = false,
 )
@@ -45,6 +44,5 @@ fun NoteEntity.toDomain(labelIds: List<Long> = emptyList()) = Note(
     updatedAt = updatedAt,
     trashedAt = trashedAt,
     labelIds = labelIds,
-    hidden = hidden,
     locked = locked,
 )

@@ -11,7 +11,7 @@ private const val SUMMARY_COLUMNS = """
     n.id, n.title, substr(n.body, 1, 400) AS preview, n.color, n.pinnedToTop, n.pinnedToNotification,
     n.position, n.updatedAt,
     (SELECT GROUP_CONCAT(nl.labelId) FROM note_labels nl WHERE nl.noteId = n.id) AS labelIds,
-    n.hidden, n.locked
+    n.locked
 """
 
 @Dao
@@ -19,13 +19,13 @@ interface NoteDao {
 
     /**
      * Notes in [state]. Notes in the secret folder never reach the main page and show up in the archive or
-     * trash only while [unlocked]; the main page also leaves out hidden notes.
+     * trash only while [unlocked].
      */
     @Query(
         """
         SELECT $SUMMARY_COLUMNS FROM notes n
         WHERE n.state = :state
-            AND (:mainPage = 0 OR (n.hidden = 0 AND n.locked = 0))
+            AND (:mainPage = 0 OR n.locked = 0)
             AND (:unlocked OR n.locked = 0)
         ORDER BY n.pinnedToTop DESC, n.position DESC
         """,
@@ -66,9 +66,6 @@ interface NoteDao {
 
     @Query("SELECT locked FROM notes WHERE id = :id")
     fun observeIsLocked(id: Long): Flow<Boolean?>
-
-    @Query("UPDATE notes SET hidden = :hidden WHERE id IN (:ids)")
-    suspend fun setHidden(ids: List<Long>, hidden: Boolean)
 
     @Query(
         """

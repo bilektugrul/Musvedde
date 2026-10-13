@@ -14,7 +14,6 @@ data class NoteSummaryRow(
     val position: Long,
     val updatedAt: Long,
     val labelIds: String?,
-    val hidden: Boolean,
     val locked: Boolean,
 )
 
@@ -28,6 +27,5 @@ fun NoteSummaryRow.toDomain() = NoteSummary(
     position = position,
     updatedAt = updatedAt,
     labelIds = labelIds.orEmpty().split(',').mapNotNull { it.toLongOrNull() }.toImmutableList(),
-    hidden = hidden,
     locked = locked,
 )

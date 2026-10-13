@@ -12,7 +12,6 @@ data class NoteSummary(
     val position: Long,
     val updatedAt: Long,
     val labelIds: ImmutableList<Long>,
-    val hidden: Boolean = false,
     /** The note lives in the secret folder. */
     val locked: Boolean = false,
 )

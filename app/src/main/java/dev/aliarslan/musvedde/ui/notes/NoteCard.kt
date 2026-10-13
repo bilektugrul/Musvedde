@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotificationsActive
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -82,16 +81,8 @@ fun NoteCard(
                     color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                 )
             }
-            if (note.labelIds.isNotEmpty() || note.pinnedToNotification || note.hidden) {
+            if (note.labelIds.isNotEmpty() || note.pinnedToNotification) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (note.hidden) {
-                        Icon(
-                            Icons.Outlined.VisibilityOff,
-                            contentDescription = stringResource(R.string.note_hidden),
-                            modifier = Modifier.size(16.dp),
-                            tint = textColor,
-                        )
-                    }
                     if (note.pinnedToNotification) {
                         Icon(
                             Icons.Outlined.NotificationsActive,

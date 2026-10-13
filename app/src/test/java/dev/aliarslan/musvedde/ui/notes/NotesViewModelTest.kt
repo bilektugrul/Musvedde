@@ -79,32 +79,6 @@ class NotesViewModelTest {
     }
 
     @Test
-    fun hidingSelectedNotesTakesThemOffTheMainPageAndBack() = runTest(dispatcher) {
-        val a = notes.create("", "a")
-        val b = notes.create("", "b")
-        val vm = viewModel()
-        collect(vm)
-        advanceUntilIdle()
-
-        vm.select(a)
-        advanceUntilIdle()
-        assertThat(vm.uiState.value.selectionHidden).isFalse()
-        vm.toggleHiddenSelected()
-        advanceUntilIdle()
-        assertThat(vm.uiState.value.others.map { it.id }).containsExactly(b)
-
-        vm.setQuery("a")
-        advanceUntilIdle()
-        vm.select(a)
-        advanceUntilIdle()
-        assertThat(vm.uiState.value.selectionHidden).isTrue()
-        vm.toggleHiddenSelected()
-        vm.setQuery("")
-        advanceUntilIdle()
-        assertThat(vm.uiState.value.others.map { it.id }).containsExactly(a, b)
-    }
-
-    @Test
     fun lockingMovesNotesIntoTheSecretFolder() = runTest(dispatcher) {
         val secret = notes.create("", "gizli deniz")
         val open = notes.create("", "açık deniz")

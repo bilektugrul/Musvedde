@@ -24,8 +24,6 @@ import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.RestoreFromTrash
 import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material.icons.outlined.ViewAgenda
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -125,8 +123,6 @@ fun SelectionTopBar(
     onTrash: () -> Unit,
     onRestore: () -> Unit,
     onDeleteForever: () -> Unit,
-    selectionHidden: Boolean = false,
-    onToggleHidden: () -> Unit = {},
     selectionLocked: Boolean = false,
     onToggleLocked: () -> Unit = {},
 ) {
@@ -182,16 +178,6 @@ fun SelectionTopBar(
                     Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(if (selectionHidden) R.string.action_show_on_main else R.string.action_hide_from_main)) },
-                        leadingIcon = {
-                            Icon(if (selectionHidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null)
-                        },
-                        onClick = {
-                            menuOpen = false
-                            onToggleHidden()
-                        },
-                    )
                     DropdownMenuItem(
                         text = { Text(stringResource(if (selectionLocked) R.string.action_move_out_of_secret else R.string.action_move_to_secret)) },
                         leadingIcon = { Icon(if (selectionLocked) Icons.Outlined.LockOpen else Icons.Outlined.Lock, contentDescription = null) },

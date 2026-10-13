@@ -9,8 +9,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.LockOpen
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import android.provider.Settings
@@ -190,7 +188,6 @@ fun EditorScreen(
                         },
                         onArchive = viewModel::archive,
                         onOpenHistory = openHistory,
-                        onToggleHidden = viewModel::toggleHidden,
                         onToggleLocked = { requirePin { viewModel.toggleLocked() } },
                     )
                 }
@@ -273,7 +270,6 @@ private fun EditorTopBar(
     onToggleNotification: () -> Unit,
     onArchive: () -> Unit,
     onOpenHistory: () -> Unit,
-    onToggleHidden: () -> Unit,
     onToggleLocked: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -322,14 +318,6 @@ private fun EditorTopBar(
                         onClick = {
                             menuOpen = false
                             onOpenHistory()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(if (state.hidden) R.string.action_show_on_main else R.string.action_hide_from_main)) },
-                        leadingIcon = { Icon(if (state.hidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null) },
-                        onClick = {
-                            menuOpen = false
-                            onToggleHidden()
                         },
                     )
                     DropdownMenuItem(

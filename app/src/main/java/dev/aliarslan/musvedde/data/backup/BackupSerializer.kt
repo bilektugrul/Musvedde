@@ -151,7 +151,6 @@ class BackupSerializer @Inject constructor(
         trashedAt = trashedAt,
         labelNames = labels,
         versions = versions,
-        hidden = hidden,
         locked = locked,
     )
 

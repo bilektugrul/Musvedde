@@ -24,7 +24,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 sealed interface NoteFilter {
-    /** Notes in [state]; the active notes leave out hidden ones, like the main page. */
+    /** Notes in [state], like the main page, archive and trash. */
     data class InState(val state: NoteState) : NoteFilter
     data class WithLabel(val labelId: Long) : NoteFilter
     data object Secret : NoteFilter
@@ -90,8 +90,6 @@ class NoteRepository @Inject constructor(
             )
         }
     }
-
-    suspend fun setHidden(ids: List<Long>, hidden: Boolean) = withContext(io) { dao.setHidden(ids, hidden) }
 
     suspend fun setLocked(ids: List<Long>, locked: Boolean) = withContext(io) { dao.setLocked(ids, locked) }
 

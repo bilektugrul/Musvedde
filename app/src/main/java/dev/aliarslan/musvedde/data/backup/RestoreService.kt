@@ -74,7 +74,6 @@ class RestoreService @Inject constructor(
                             createdAt = note.createdAt,
                             updatedAt = note.updatedAt,
                             trashedAt = if (state == NoteState.TRASHED) note.trashedAt ?: note.updatedAt else null,
-                            hidden = note.hidden,
                             locked = note.locked,
                         )
                     },

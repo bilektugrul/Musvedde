@@ -22,6 +22,27 @@ class MigrationTest {
     )
 
     @Test
+    fun migrate4To5BringsHiddenNotesBack() {
+        helper.createDatabase(dbPath, 4).use { db ->
+            db.execSQL(
+                "INSERT INTO notes (id, title, body, color, pinnedToTop, pinnedToNotification, state, position, createdAt, updatedAt, trashedAt, hidden, locked) " +
+                    "VALUES (1, 'gizli', 'deniz', 'DEFAULT', 0, 0, 'ACTIVE', 1, 1, 1, NULL, 1, 0), " +
+                    "(2, 'kasa', 'deniz', 'DEFAULT', 0, 0, 'ACTIVE', 2, 1, 1, NULL, 0, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbPath, 5, true, MIGRATION_4_5).use { db ->
+            db.query("SELECT id, locked FROM notes ORDER BY id").use { cursor ->
+                val rows = buildList { while (cursor.moveToNext()) add(cursor.getLong(0) to cursor.getInt(1)) }
+                assertThat(rows).containsExactly(1L to 0, 2L to 1).inOrder()
+            }
+            db.query("SELECT rowid FROM notes_fts WHERE notes_fts MATCH 'deniz'").use { cursor ->
+                assertThat(cursor.count).isEqualTo(2)
+            }
+        }
+    }
+
+    @Test
     fun migrate3To4MovesLockedFoldersIntoTheSecretFolder() {
         helper.createDatabase(dbPath, 3).use { db ->
             db.execSQL("INSERT INTO folders (id, name, locked) VALUES (1, 'Kasa', 1), (2, 'Açık', 0)")

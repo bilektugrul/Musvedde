@@ -359,10 +359,7 @@
         <item quantity="other">%d locked notes need the backup\'s PIN</item>
     </plurals>
     <string name="auto_restore_enter_pin">Enter PIN</string>
-    <string name="action_hide_from_main">Hide from the main page</string>
-    <string name="action_show_on_main">Show on the main page</string>
     <string name="note_locked">Locked note</string>
-    <string name="note_hidden">Hidden from the main page</string>
     <string name="nav_secret">Secret folder</string>
     <string name="empty_secret">Notes you lock land here</string>
     <string name="action_move_to_secret">Move to the secret folder</string>

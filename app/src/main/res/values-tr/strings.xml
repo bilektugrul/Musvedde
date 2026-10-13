@@ -358,10 +358,7 @@
         <item quantity="other">%d kilitli not yedeğin PIN\'ini bekliyor</item>
     </plurals>
     <string name="auto_restore_enter_pin">PIN gir</string>
-    <string name="action_hide_from_main">Ana sayfadan gizle</string>
-    <string name="action_show_on_main">Ana sayfada göster</string>
     <string name="note_locked">Kilitli not</string>
-    <string name="note_hidden">Ana sayfada gizli</string>
     <string name="nav_secret">Gizli klasör</string>
     <string name="empty_secret">Kilitlediğin notlar buraya gelir</string>
     <string name="action_move_to_secret">Gizli klasöre taşı</string>

@@ -51,16 +51,6 @@ class SecretFolderTest {
     }
 
     @Test
-    fun hiddenNotesStayOffTheMainPageButShowInSearch() = runTest {
-        val hidden = notes.create("gizli", "deniz")
-        val visible = notes.create("açık", "deniz")
-        notes.setHidden(listOf(hidden), true)
-
-        assertThat(ids(main)).containsExactly(visible)
-        assertThat(ids(NoteFilter.Search("deniz"))).containsExactly(hidden, visible)
-    }
-
-    @Test
     fun archivedAndTrashedSecretNotesNeedTheFolderOpen() = runTest {
         val archived = notes.create("", "arşiv")
         val trashed = notes.create("", "çöp")

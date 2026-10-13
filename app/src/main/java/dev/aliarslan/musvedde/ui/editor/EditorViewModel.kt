@@ -53,7 +53,6 @@ data class EditorUiState(
     val state: NoteState = NoteState.ACTIVE,
     val labelIds: ImmutableSet<Long> = persistentSetOf(),
     val updatedAt: Long? = null,
-    val hidden: Boolean = false,
     val locked: Boolean = false,
 )
 
@@ -146,7 +145,6 @@ class EditorViewModel @Inject constructor(
                 state = note.state,
                 labelIds = note.labelIds.toImmutableSet(),
                 updatedAt = note.updatedAt,
-                hidden = note.hidden,
                 locked = note.locked,
             )
         }
@@ -225,12 +223,6 @@ class EditorViewModel @Inject constructor(
             labels.setLabel(listOf(id), labelId, add = true)
             _uiState.update { s -> s.copy(labelIds = (s.labelIds + labelId).toImmutableSet()) }
         }
-    }
-
-    fun toggleHidden() = mutate {
-        val hidden = !_uiState.value.hidden
-        notes.setHidden(listOf(it), hidden)
-        _uiState.update { s -> s.copy(hidden = hidden) }
     }
 
     /** Moving a note into the secret folder also closes it, so it is not left open outside the folder. */
