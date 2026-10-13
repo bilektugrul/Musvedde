@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.aliarslan.musvedde.data.lock.LockManager
-import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteFilter
 import dev.aliarslan.musvedde.data.note.NoteEvent
@@ -15,7 +14,6 @@ import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.domain.EditorFont
-import dev.aliarslan.musvedde.domain.Folder
 import dev.aliarslan.musvedde.domain.Label
 import dev.aliarslan.musvedde.domain.ListLayout
 import dev.aliarslan.musvedde.domain.NoteColor
@@ -41,7 +39,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -61,10 +58,7 @@ data class NotesUiState(
     val selectedColor: NoteColor? = null,
     val query: String = "",
     val canReorder: Boolean = false,
-    val folderId: Long = NotesRoute.NO_FOLDER,
-    val folder: Folder? = null,
-    val unlocked: Boolean = false,
-    /** Every selected note is hidden from the main page / locked; the actions then undo that. */
+    /** Every selected note is hidden from the main page / in the secret folder; the actions then undo that. */
     val selectionHidden: Boolean = false,
     val selectionLocked: Boolean = false,
 )
@@ -86,21 +80,19 @@ class NotesViewModel @Inject constructor(
     private val noteEvents: NoteEventBus,
     private val labels: LabelRepository,
     private val settings: SettingsRepository,
-    private val folders: FolderRepository,
     private val lockManager: LockManager,
     @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val section: NotesSection = savedStateHandle.get<NotesSection>("section") ?: NotesSection.ACTIVE
     private val labelId: Long = savedStateHandle.get<Long>("labelId") ?: NotesRoute.NO_LABEL
-    private val folderId: Long = savedStateHandle.get<Long>("folderId") ?: NotesRoute.NO_FOLDER
 
     private val baseFilter: NoteFilter = when (section) {
         NotesSection.ACTIVE -> NoteFilter.InState(NoteState.ACTIVE)
         NotesSection.ARCHIVED -> NoteFilter.InState(NoteState.ARCHIVED)
         NotesSection.TRASHED -> NoteFilter.InState(NoteState.TRASHED)
         NotesSection.LABEL -> NoteFilter.WithLabel(labelId)
-        NotesSection.FOLDER -> NoteFilter.InFolder(folderId)
+        NotesSection.SECRET -> NoteFilter.Secret
     }
 
     private val query = MutableStateFlow("")
@@ -110,20 +102,17 @@ class NotesViewModel @Inject constructor(
         query.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS },
         lockManager.unlocked,
     ) { q, unlocked -> q to unlocked }
-        .flatMapLatest { (q, unlocked) -> notes.observe(if (q.isBlank()) baseFilter else NoteFilter.Search(q), unlocked) }
-
-    private val folder: Flow<Folder?> = if (section == NotesSection.FOLDER) folders.observe(folderId) else flowOf(null)
-
-    val allFolders: StateFlow<ImmutableList<Folder>> = folders.observeAll()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
+        .flatMapLatest { (q, unlocked) ->
+            notes.observe(if (q.isBlank()) baseFilter else NoteFilter.Search(q, secret = section == NotesSection.SECRET), unlocked)
+        }
 
     val uiState: StateFlow<NotesUiState> = combine(
-        combine(visibleNotes, selection, query, ::Triple),
+        visibleNotes,
+        selection,
+        query,
         settings.settings,
-        folder,
-        lockManager.unlocked,
-    ) { (list, selected, q), s, currentFolder, unlocked ->
-        val groupPinned = q.isBlank() && section in setOf(NotesSection.ACTIVE, NotesSection.LABEL, NotesSection.FOLDER)
+    ) { list, selected, q, s ->
+        val groupPinned = q.isBlank() && section in setOf(NotesSection.ACTIVE, NotesSection.LABEL, NotesSection.SECRET)
         val selectedNotes = list.filter { it.id in selected }
         NotesUiState(
             section = section,
@@ -138,13 +127,12 @@ class NotesViewModel @Inject constructor(
             selectedColor = list.filter { it.id in selected }.map { it.color }.distinct().singleOrNull(),
             query = q,
             canReorder = q.isBlank() && section == NotesSection.ACTIVE,
-            folderId = folderId,
-            folder = currentFolder,
-            unlocked = unlocked,
             selectionHidden = selectedNotes.isNotEmpty() && selectedNotes.all { it.hidden },
             selectionLocked = selectedNotes.isNotEmpty() && selectedNotes.all { it.locked },
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotesUiState(section, labelId, folderId = folderId))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotesUiState(section, labelId))
+
+    val unlocked: StateFlow<Boolean> = lockManager.unlocked
 
     val allLabels: StateFlow<ImmutableList<Label>> = labels.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
@@ -192,12 +180,6 @@ class NotesViewModel @Inject constructor(
     }
 
     fun labelSelected(labelId: Long, add: Boolean) = onSelection(clear = false) { labels.setLabel(it, labelId, add) }
-
-    fun moveSelectedToFolder(folderId: Long?) = onSelection { notes.setFolder(it, folderId) }
-
-    fun moveSelectedToNewFolder(name: String) = onSelection { ids ->
-        folders.create(name).onSuccess { notes.setFolder(ids, it) }
-    }
 
     fun toggleHiddenSelected() {
         val hide = !uiState.value.selectionHidden

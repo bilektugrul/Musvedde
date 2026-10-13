@@ -129,6 +129,24 @@ fun rememberRequireUnlock(viewModel: LockViewModel = hiltViewModel()): (() -> Un
     return { action -> if (viewModel.unlocked.value) action() else pending = action }
 }
 
+/** Returns a function that runs an action once a PIN exists, asking the user to create one first if needed. */
+@Composable
+fun rememberRequirePin(viewModel: LockViewModel = hiltViewModel()): (() -> Unit) -> Unit {
+    var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
+    pending?.let { action ->
+        PinSetupDialog(
+            changing = false,
+            onDone = {
+                pending = null
+                action()
+            },
+            onDismiss = { pending = null },
+            viewModel = viewModel,
+        )
+    }
+    return { action -> if (viewModel.hasPin.value == true) action() else pending = action }
+}
+
 /** Shows [content] only while locked content is open; otherwise a lock screen that asks for the PIN. */
 @Composable
 fun LockGate(locked: Boolean, modifier: Modifier = Modifier, viewModel: LockViewModel = hiltViewModel(), content: @Composable () -> Unit) {

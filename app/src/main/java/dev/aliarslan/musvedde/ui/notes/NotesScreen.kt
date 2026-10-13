@@ -21,7 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.AlertDialog
@@ -56,9 +56,8 @@ import dev.aliarslan.musvedde.domain.NoteSummary
 import dev.aliarslan.musvedde.ui.NotesSection
 import dev.aliarslan.musvedde.ui.editor.ColorPickerSheet
 import dev.aliarslan.musvedde.ui.editor.LabelPickerSheet
-import dev.aliarslan.musvedde.ui.folders.FolderPickerSheet
 import dev.aliarslan.musvedde.ui.lock.LockGate
-import dev.aliarslan.musvedde.ui.lock.rememberRequireUnlock
+import dev.aliarslan.musvedde.ui.lock.rememberRequirePin
 import androidx.compose.animation.core.tween
 import dev.aliarslan.musvedde.ui.theme.Appearance
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
@@ -75,22 +74,20 @@ import sh.calvin.reorderable.rememberReorderableLazyStaggeredGridState
 fun NotesScreen(
     onMenu: () -> Unit,
     onOpenNote: (Long) -> Unit,
-    onNewNote: (folderId: Long?) -> Unit,
+    onNewNote: (secret: Boolean) -> Unit,
     viewModel: NotesViewModel = hiltViewModel(),
     autoRestoreViewModel: AutoRestoreViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val restoreState by autoRestoreViewModel.state.collectAsStateWithLifecycle()
     val labels by viewModel.allLabels.collectAsStateWithLifecycle()
-    val folders by viewModel.allFolders.collectAsStateWithLifecycle()
-    val requireUnlock = rememberRequireUnlock()
+    val requirePin = rememberRequirePin()
     val labelNames = remember(labels) { labels.associate { it.id to it.name }.toImmutableMap() }
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
 
     var showColors by rememberSaveable { mutableStateOf(false) }
     var showLabels by rememberSaveable { mutableStateOf(false) }
-    var showFolders by rememberSaveable { mutableStateOf(false) }
     var confirmEmptyTrash by rememberSaveable { mutableStateOf(false) }
     var confirmDeleteForever by rememberSaveable { mutableStateOf(false) }
 
@@ -115,7 +112,7 @@ fun NotesScreen(
         NotesSection.ARCHIVED -> stringResource(R.string.nav_archive)
         NotesSection.TRASHED -> stringResource(R.string.nav_trash)
         NotesSection.LABEL -> labelNames[state.labelId]
-        NotesSection.FOLDER -> state.folder?.name
+        NotesSection.SECRET -> stringResource(R.string.nav_secret)
     }
 
     Scaffold(
@@ -130,11 +127,10 @@ fun NotesScreen(
                     onColor = { showColors = true },
                     onLabel = { showLabels = true },
                     onArchive = viewModel::archiveSelected,
-                    onMoveToFolder = { showFolders = true },
                     selectionHidden = state.selectionHidden,
                     onToggleHidden = viewModel::toggleHiddenSelected,
                     selectionLocked = state.selectionLocked,
-                    onToggleLocked = { requireUnlock { viewModel.toggleLockedSelected() } },
+                    onToggleLocked = { requirePin { viewModel.toggleLockedSelected() } },
                     onTrash = viewModel::trashSelected,
                     onRestore = viewModel::restoreSelected,
                     onDeleteForever = { confirmDeleteForever = true },
@@ -151,9 +147,10 @@ fun NotesScreen(
             }
         },
         floatingActionButton = {
-            val canAdd = state.section in setOf(NotesSection.ACTIVE, NotesSection.LABEL, NotesSection.FOLDER)
-            if (canAdd && (state.folder?.locked != true || state.unlocked)) {
-                FloatingActionButton(onClick = { onNewNote(state.folderId.takeIf { state.section == NotesSection.FOLDER }) }) {
+            val unlocked by viewModel.unlocked.collectAsStateWithLifecycle()
+            val canAdd = state.section in setOf(NotesSection.ACTIVE, NotesSection.LABEL, NotesSection.SECRET)
+            if (canAdd && (state.section != NotesSection.SECRET || unlocked)) {
+                FloatingActionButton(onClick = { onNewNote(state.section == NotesSection.SECRET) }) {
                     Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.action_new_note))
                 }
             }
@@ -164,21 +161,14 @@ fun NotesScreen(
                 AutoRestoreBanner(restoreState, onDismiss = autoRestoreViewModel::dismiss, onPin = autoRestoreViewModel::unlockPending)
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                LockGate(locked = state.folder?.locked == true) {
+                LockGate(locked = state.section == NotesSection.SECRET) {
                     if (state.loaded && state.pinned.isEmpty() && state.others.isEmpty()) {
                         EmptyState(state.section, searching = state.query.isNotBlank())
                     } else {
                         NotesGrid(
                             state = state,
                             labelNames = labelNames,
-                            onOpen = { id ->
-                                val locked = (state.pinned + state.others).firstOrNull { it.id == id }?.locked == true
-                                when {
-                                    state.selection.isNotEmpty() -> viewModel.toggleSelect(id)
-                                    locked -> requireUnlock { onOpenNote(id) }
-                                    else -> onOpenNote(id)
-                                }
-                            },
+                            onOpen = { id -> if (state.selection.isEmpty()) onOpenNote(id) else viewModel.toggleSelect(id) },
                             onSelect = viewModel::toggleSelect,
                             onDragStart = viewModel::select,
                             onMove = viewModel::move,
@@ -211,21 +201,6 @@ fun NotesScreen(
             onToggle = { id -> viewModel.labelSelected(id, add = id !in common) },
             onCreate = {},
             onDismiss = { showLabels = false },
-        )
-    }
-    if (showFolders) {
-        FolderPickerSheet(
-            folders = folders,
-            selected = (state.pinned + state.others).filter { it.id in state.selection }.map { it.folderId }.distinct().singleOrNull(),
-            onSelect = {
-                viewModel.moveSelectedToFolder(it)
-                showFolders = false
-            },
-            onCreate = {
-                viewModel.moveSelectedToNewFolder(it)
-                showFolders = false
-            },
-            onDismiss = { showFolders = false },
         )
     }
     if (confirmEmptyTrash) {
@@ -399,7 +374,7 @@ private fun EmptyState(section: NotesSection, searching: Boolean) {
         searching -> Icons.Outlined.SearchOff to R.string.empty_search
         section == NotesSection.ARCHIVED -> Icons.Outlined.Archive to R.string.empty_archive
         section == NotesSection.TRASHED -> Icons.Outlined.Delete to R.string.empty_trash
-        section == NotesSection.FOLDER -> Icons.Outlined.Folder to R.string.empty_folder
+        section == NotesSection.SECRET -> Icons.Outlined.Lock to R.string.empty_secret
         else -> Icons.Outlined.Lightbulb to R.string.empty_notes
     }
     Column(

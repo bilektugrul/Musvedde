@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.LockOpen
@@ -117,9 +116,8 @@ import dev.aliarslan.musvedde.domain.NoteState
 import dev.aliarslan.musvedde.domain.Settings as AppSettings
 import dev.aliarslan.musvedde.ui.theme.LocalAppearance
 import dev.aliarslan.musvedde.ui.theme.fontFamily
-import dev.aliarslan.musvedde.ui.folders.FolderPickerSheet
 import dev.aliarslan.musvedde.ui.lock.LockGate
-import dev.aliarslan.musvedde.ui.lock.rememberRequireUnlock
+import dev.aliarslan.musvedde.ui.lock.rememberRequirePin
 import dev.aliarslan.musvedde.ui.theme.noteContainerColor
 
 @Composable
@@ -149,9 +147,8 @@ fun EditorScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by viewModel.editorSettings.collectAsStateWithLifecycle()
     val labels by viewModel.allLabels.collectAsStateWithLifecycle()
-    val folders by viewModel.allFolders.collectAsStateWithLifecycle()
     val contentLocked by viewModel.contentLocked.collectAsStateWithLifecycle()
-    val requireUnlock = rememberRequireUnlock()
+    val requirePin = rememberRequirePin()
 
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flush() }
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.reloadIfChanged() }
@@ -163,7 +160,6 @@ fun EditorScreen(
     LaunchedEffect(settings.alwaysFocusMode) { if (settings.alwaysFocusMode) focusMode = true }
     var showColors by rememberSaveable { mutableStateOf(false) }
     var showLabels by rememberSaveable { mutableStateOf(false) }
-    var showFolders by rememberSaveable { mutableStateOf(false) }
 
     FocusModeEffect(focusMode)
     BackHandler(enabled = focusMode) { focusMode = false }
@@ -194,9 +190,8 @@ fun EditorScreen(
                         },
                         onArchive = viewModel::archive,
                         onOpenHistory = openHistory,
-                        onMoveToFolder = { showFolders = true },
                         onToggleHidden = viewModel::toggleHidden,
-                        onToggleLocked = { requireUnlock { viewModel.toggleLocked() } },
+                        onToggleLocked = { requirePin { viewModel.toggleLocked() } },
                     )
                 }
             },
@@ -250,21 +245,6 @@ fun EditorScreen(
         }
     }
 
-    if (showFolders) {
-        FolderPickerSheet(
-            folders = folders,
-            selected = state.folderId,
-            onSelect = {
-                viewModel.setFolder(it)
-                showFolders = false
-            },
-            onCreate = {
-                viewModel.createFolder(it)
-                showFolders = false
-            },
-            onDismiss = { showFolders = false },
-        )
-    }
     if (showColors) {
         ColorPickerSheet(
             selected = state.color,
@@ -293,7 +273,6 @@ private fun EditorTopBar(
     onToggleNotification: () -> Unit,
     onArchive: () -> Unit,
     onOpenHistory: () -> Unit,
-    onMoveToFolder: () -> Unit,
     onToggleHidden: () -> Unit,
     onToggleLocked: () -> Unit,
 ) {
@@ -346,14 +325,6 @@ private fun EditorTopBar(
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_move_to_folder)) },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Outlined.DriveFileMove, contentDescription = null) },
-                        onClick = {
-                            menuOpen = false
-                            onMoveToFolder()
-                        },
-                    )
-                    DropdownMenuItem(
                         text = { Text(stringResource(if (state.hidden) R.string.action_show_on_main else R.string.action_hide_from_main)) },
                         leadingIcon = { Icon(if (state.hidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null) },
                         onClick = {
@@ -362,7 +333,7 @@ private fun EditorTopBar(
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(if (state.locked) R.string.action_unlock_note else R.string.action_lock_note)) },
+                        text = { Text(stringResource(if (state.locked) R.string.action_move_out_of_secret else R.string.action_move_to_secret)) },
                         leadingIcon = { Icon(if (state.locked) Icons.Outlined.LockOpen else Icons.Outlined.Lock, contentDescription = null) },
                         onClick = {
                             menuOpen = false

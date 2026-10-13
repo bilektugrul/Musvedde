@@ -35,11 +35,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val labels by viewModel.labels.collectAsStateWithLifecycle()
-            val folders by viewModel.folders.collectAsStateWithLifecycle()
             val loaded = settings ?: return@setContent
             MusveddeTheme(loaded) {
                 Surface(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }, color = MaterialTheme.colorScheme.background) {
-                    MusveddeNavHost(labels = labels, folders = folders, openNoteRequests = openNoteRequests.receiveAsFlow())
+                    MusveddeNavHost(labels = labels, openNoteRequests = openNoteRequests.receiveAsFlow())
                 }
             }
         }

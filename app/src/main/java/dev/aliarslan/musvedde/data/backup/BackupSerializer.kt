@@ -32,13 +32,11 @@ class BackupSerializer @Inject constructor(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** Writes every note; locked ones (and those in locked folders) only go into the encrypted vault. */
+    /** Writes every note; those in the secret folder only go into the encrypted vault. */
     suspend fun write(out: OutputStream) {
         val labels = db.labelDao().all()
         val labelNames = labels.associate { it.id to it.name }
         val noteLabels = db.labelDao().allCrossRefs().groupBy({ it.noteId }, { labelNames.getValue(it.labelId) })
-        val folders = db.folderDao().all()
-        val folderById = folders.associateBy { it.id }
         val lockedNotes = mutableListOf<BackupNote>()
 
         val zip = ZipOutputStream(out)
@@ -46,8 +44,6 @@ class BackupSerializer @Inject constructor(
         val writer = zip.bufferedWriter(Charsets.UTF_8)
         writer.write("{\"labels\":")
         writer.write(json.encodeToString(labels.map { BackupLabel(it.name) }))
-        writer.write(",\"folders\":")
-        writer.write(json.encodeToString(folders.map { BackupFolder(it.name, it.locked) }))
         writer.write(",\"notes\":[")
         var count = 0
         var lastId = 0L
@@ -57,9 +53,8 @@ class BackupSerializer @Inject constructor(
             val versions = db.noteVersionDao().forNotes(page.map { it.id }).groupBy { it.noteId }
             page.forEach { note ->
                 val history = versions[note.id].orEmpty().map { BackupVersion(it.title, it.body, it.createdAt) }
-                val folder = note.folderId?.let(folderById::get)
-                val backup = note.toBackup(noteLabels[note.id].orEmpty(), history, folder?.name)
-                if (note.locked || folder?.locked == true) {
+                val backup = note.toBackup(noteLabels[note.id].orEmpty(), history)
+                if (note.locked) {
                     lockedNotes += backup
                 } else {
                     if (count > 0) writer.write(",")
@@ -110,7 +105,7 @@ class BackupSerializer @Inject constructor(
             }
             val data = json.decodeFromString<BackupData>(dataText)
             val vault = entries[VAULT]?.let { json.decodeFromString<BackupVault>(it) }
-            return BackupContent(manifest, data.labels, data.notes, data.folders, vault)
+            return BackupContent(manifest, data.labels, data.notes, vault)
         } catch (e: SerializationException) {
             throw BackupFormatException("Corrupt backup data", e)
         } catch (e: IllegalArgumentException) {
@@ -143,7 +138,7 @@ class BackupSerializer @Inject constructor(
 
     private fun ByteArray.base64(): String = Base64.getEncoder().encodeToString(this)
 
-    private fun NoteEntity.toBackup(labels: List<String>, versions: List<BackupVersion>, folderName: String?) = BackupNote(
+    private fun NoteEntity.toBackup(labels: List<String>, versions: List<BackupVersion>) = BackupNote(
         title = title,
         body = body,
         color = color,
@@ -156,7 +151,6 @@ class BackupSerializer @Inject constructor(
         trashedAt = trashedAt,
         labelNames = labels,
         versions = versions,
-        folderName = folderName,
         hidden = hidden,
         locked = locked,
     )

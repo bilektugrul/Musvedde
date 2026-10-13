@@ -6,7 +6,6 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.inMemoryDatabase
-import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.note.NoteEventBus
@@ -66,7 +65,6 @@ class EditorViewModelTest {
         notes = notes,
         versions = versions,
         labels = LabelRepository(db.labelDao(), dispatcher),
-        folders = FolderRepository(db, dispatcher),
         settings = SettingsRepository(InMemoryPreferencesDataStore()),
         appScope = appScope,
         clock = { 1L },

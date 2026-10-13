@@ -3,10 +3,8 @@ package dev.aliarslan.musvedde.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
-import dev.aliarslan.musvedde.domain.Folder
 import dev.aliarslan.musvedde.domain.Label
 import dev.aliarslan.musvedde.domain.Settings
 import kotlinx.collections.immutable.ImmutableList
@@ -20,15 +18,11 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     settingsRepository: SettingsRepository,
     labelRepository: LabelRepository,
-    folderRepository: FolderRepository,
 ) : ViewModel() {
 
     val settings: StateFlow<Settings?> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val labels: StateFlow<ImmutableList<Label>> = labelRepository.observeAll()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
-
-    val folders: StateFlow<ImmutableList<Folder>> = folderRepository.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 }

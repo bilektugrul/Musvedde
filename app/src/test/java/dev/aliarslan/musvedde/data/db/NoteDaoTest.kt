@@ -54,7 +54,7 @@ class NoteDaoTest {
         val id = dao.insert(noteEntity(body = "gecenin karanlığı"))
         dao.insert(noteEntity(body = "sabah"))
 
-        val ids = dao.searchSummaries("karan*", unlocked = false).first().map { it.id }
+        val ids = dao.searchSummaries("karan*", secret = false).first().map { it.id }
 
         assertThat(ids).containsExactly(id)
     }
@@ -64,8 +64,8 @@ class NoteDaoTest {
         val id = dao.insert(noteEntity(body = "eski"))
         dao.updateContent(id, "", "yeni satır", updatedAt = 2)
 
-        assertThat(dao.searchSummaries("eski*", unlocked = false).first()).isEmpty()
-        assertThat(dao.searchSummaries("satır*", unlocked = false).first().map { it.id }).containsExactly(id)
+        assertThat(dao.searchSummaries("eski*", secret = false).first()).isEmpty()
+        assertThat(dao.searchSummaries("satır*", secret = false).first().map { it.id }).containsExactly(id)
     }
 
     @Test

@@ -22,6 +22,33 @@ class MigrationTest {
     )
 
     @Test
+    fun migrate3To4MovesLockedFoldersIntoTheSecretFolder() {
+        helper.createDatabase(dbPath, 3).use { db ->
+            db.execSQL("INSERT INTO folders (id, name, locked) VALUES (1, 'Kasa', 1), (2, 'Açık', 0)")
+            listOf(1 to 1, 2 to 2, 3 to null).forEach { (id, folder) ->
+                db.execSQL(
+                    "INSERT INTO notes (id, title, body, color, pinnedToTop, pinnedToNotification, state, position, createdAt, updatedAt, trashedAt, folderId, hidden, locked) " +
+                        "VALUES ($id, 'not $id', 'deniz $id', 'DEFAULT', 0, 0, 'ACTIVE', $id, 1, 1, NULL, $folder, 0, 0)",
+                )
+            }
+        }
+
+        helper.runMigrationsAndValidate(dbPath, 4, true, MIGRATION_3_4).use { db ->
+            db.query("SELECT id, locked FROM notes ORDER BY id").use { cursor ->
+                val rows = buildList { while (cursor.moveToNext()) add(cursor.getLong(0) to cursor.getInt(1)) }
+                assertThat(rows).containsExactly(1L to 1, 2L to 0, 3L to 0).inOrder()
+            }
+            db.query("SELECT rowid FROM notes_fts WHERE notes_fts MATCH 'deniz'").use { cursor ->
+                assertThat(cursor.count).isEqualTo(3)
+            }
+            db.execSQL("UPDATE notes SET body = 'yağmur' WHERE id = 2")
+            db.query("SELECT rowid FROM notes_fts WHERE notes_fts MATCH 'yağmur'").use { cursor ->
+                assertThat(cursor.count).isEqualTo(1)
+            }
+        }
+    }
+
+    @Test
     fun migrate1To2KeepsNotesAndAddsVersionTables() {
         helper.createDatabase(dbPath, 1).use { db ->
             db.execSQL(

@@ -1,7 +1,6 @@
 package dev.aliarslan.musvedde.data.backup
 
 import androidx.room.withTransaction
-import dev.aliarslan.musvedde.data.db.FolderEntity
 import dev.aliarslan.musvedde.data.db.LabelEntity
 import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.NoteContentKey
@@ -29,39 +28,26 @@ class RestoreService @Inject constructor(
         )
 
     /**
-     * Restores [content]. A backup with locked notes needs the [pin] it was made with: without it the result is
-     * [BackupPinRequiredException], with the wrong one [WrongBackupPinException], and nothing is changed.
+     * Restores [content]. A backup with secret notes needs the [pin] it was made with: without it the result is
+     * [BackupPinRequiredException], with the wrong one [WrongBackupPinException], and nothing is changed. Every
+     * note from the vault goes back into the secret folder.
      */
     suspend fun restore(content: BackupContent, mode: RestoreMode, pin: String? = null): Result<Int> = runCatching {
         val lockedNotes = content.vault?.let { vault ->
             if (pin == null) throw BackupPinRequiredException()
             val key = withContext(Dispatchers.Default) { PinKdf.derive(pin, vault.salt.unbase64(), vault.iterations) }
-            serializer.openVault(vault, key)
+            serializer.openVault(vault, key).map { it.copy(locked = true) }
         }.orEmpty()
         val allNotes = content.notes + lockedNotes
         db.withTransaction {
             val notes = db.noteDao()
             val labels = db.labelDao()
-            val folders = db.folderDao()
             if (mode == RestoreMode.REPLACE) {
                 notes.deleteAll()
                 labels.deleteAll()
-                folders.deleteAll()
             }
 
             val labelIds = labels.all().associate { it.name to it.id }.toMutableMap()
-            val folderIds = folders.all().associate { it.name to it.id }.toMutableMap()
-            val lockedFolders = content.folders.filter { it.locked }.map { it.name }.toSet()
-            (content.folders.map { it.name } + allNotes.mapNotNull { it.folderName }).distinct().forEach { name ->
-                val existing = folderIds[name]
-                if (existing == null) {
-                    folderIds[name] = folders.insert(FolderEntity(name = name, locked = name in lockedFolders))
-                } else if (name in lockedFolders) {
-                    folders.setLocked(existing, true)
-                }
-            }
-
-            val lockedFolderIds = folders.all().filter { it.locked }.map { it.id }.toSet()
 
             val wantedNames = content.labels.map { it.name } + allNotes.flatMap { it.labelNames }
             wantedNames.distinct().filter { it !in labelIds }.forEach { name ->
@@ -77,19 +63,17 @@ class RestoreService @Inject constructor(
                 val ids = notes.insertAll(
                     chunk.map { note ->
                         val state = NoteState.entries.firstOrNull { it.name == note.state } ?: NoteState.ACTIVE
-                        val folderId = note.folderName?.let(folderIds::get)
                         NoteEntity(
                             title = note.title,
                             body = note.body,
                             color = NoteColor.fromName(note.color).name,
                             pinnedToTop = note.pinnedToTop,
-                            pinnedToNotification = note.pinnedToNotification && !note.locked && folderId !in lockedFolderIds,
+                            pinnedToNotification = note.pinnedToNotification && !note.locked,
                             state = state.name,
                             position = if (mode == RestoreMode.MERGE) offset + (note.position - minPosition) else note.position,
                             createdAt = note.createdAt,
                             updatedAt = note.updatedAt,
                             trashedAt = if (state == NoteState.TRASHED) note.trashedAt ?: note.updatedAt else null,
-                            folderId = folderId,
                             hidden = note.hidden,
                             locked = note.locked,
                         )

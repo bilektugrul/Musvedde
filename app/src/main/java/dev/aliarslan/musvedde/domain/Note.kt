@@ -13,7 +13,7 @@ data class Note(
     val updatedAt: Long,
     val trashedAt: Long?,
     val labelIds: List<Long>,
-    val folderId: Long? = null,
     val hidden: Boolean = false,
+    /** The note lives in the secret folder. */
     val locked: Boolean = false,
 )

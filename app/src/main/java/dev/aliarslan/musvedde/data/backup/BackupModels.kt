@@ -25,7 +25,6 @@ data class BackupNote(
     val trashedAt: Long? = null,
     val labelNames: List<String> = emptyList(),
     val versions: List<BackupVersion> = emptyList(),
-    val folderName: String? = null,
     val hidden: Boolean = false,
     val locked: Boolean = false,
 )
@@ -41,16 +40,12 @@ data class BackupVersion(
 data class BackupLabel(val name: String)
 
 @Serializable
-data class BackupFolder(val name: String, val locked: Boolean = false)
-
-@Serializable
 data class BackupData(
     val labels: List<BackupLabel>,
     val notes: List<BackupNote>,
-    val folders: List<BackupFolder> = emptyList(),
 )
 
-/** Locked notes, encrypted with a key derived from the PIN; [data] is AES-GCM over the JSON list of notes. */
+/** Secret folder notes, encrypted with a key derived from the PIN; [data] is AES-GCM over the JSON list of notes. */
 @Serializable
 data class BackupVault(
     val salt: String,
@@ -62,7 +57,6 @@ data class BackupContent(
     val manifest: BackupManifest,
     val labels: List<BackupLabel>,
     val notes: List<BackupNote>,
-    val folders: List<BackupFolder> = emptyList(),
     val vault: BackupVault? = null,
 )
 

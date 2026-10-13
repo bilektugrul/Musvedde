@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.GridView
@@ -124,7 +123,6 @@ fun SelectionTopBar(
     onTrash: () -> Unit,
     onRestore: () -> Unit,
     onDeleteForever: () -> Unit,
-    onMoveToFolder: () -> Unit = {},
     selectionHidden: Boolean = false,
     onToggleHidden: () -> Unit = {},
     selectionLocked: Boolean = false,
@@ -176,14 +174,6 @@ fun SelectionTopBar(
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_move_to_folder)) },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Outlined.DriveFileMove, contentDescription = null) },
-                        onClick = {
-                            menuOpen = false
-                            onMoveToFolder()
-                        },
-                    )
-                    DropdownMenuItem(
                         text = { Text(stringResource(if (selectionHidden) R.string.action_show_on_main else R.string.action_hide_from_main)) },
                         leadingIcon = {
                             Icon(if (selectionHidden) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, contentDescription = null)
@@ -194,7 +184,7 @@ fun SelectionTopBar(
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(if (selectionLocked) R.string.action_unlock_note else R.string.action_lock_note)) },
+                        text = { Text(stringResource(if (selectionLocked) R.string.action_move_out_of_secret else R.string.action_move_to_secret)) },
                         leadingIcon = { Icon(if (selectionLocked) Icons.Outlined.LockOpen else Icons.Outlined.Lock, contentDescription = null) },
                         onClick = {
                             menuOpen = false

@@ -5,7 +5,6 @@ import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.lock.FakeKeyWrapper
 import dev.aliarslan.musvedde.data.lock.LockConfig
 import dev.aliarslan.musvedde.data.lock.LockManager
-import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.NoteFilter
 import dev.aliarslan.musvedde.data.note.NoteRepository
 import dev.aliarslan.musvedde.data.settings.InMemoryPreferencesDataStore
@@ -28,7 +27,6 @@ class BackupVaultTest {
     private val target = inMemoryDatabase()
     private val lock = LockManager(InMemoryPreferencesDataStore(), FakeKeyWrapper(), clock = { 1L }, LockConfig(1_000, 2_000))
     private val notes = NoteRepository(source, clock = { 1L }, io = Dispatchers.Unconfined)
-    private val folders = FolderRepository(source, io = Dispatchers.Unconfined)
     private val targetNotes = NoteRepository(target, clock = { 1L }, io = Dispatchers.Unconfined)
 
     @After
@@ -51,9 +49,7 @@ class BackupVaultTest {
 
     private suspend fun lockedSetup(): Pair<Long, Long> {
         lock.setPin("2468")
-        val vault = folders.create("Kasa").getOrThrow()
-        folders.setLocked(vault, true)
-        val inVault = notes.create("kasa notu", "kasadaki sır", folderId = vault)
+        val inVault = notes.create("kasa notu", "kasadaki sır", secret = true)
         val lockedNote = notes.create("tek kilit", "tek başına sır")
         notes.setLocked(listOf(lockedNote), true)
         notes.create("açık", "herkes okur")
@@ -87,18 +83,15 @@ class BackupVaultTest {
     }
 
     @Test
-    fun restoredLockedNotesStayLockedAndInTheirFolder() = runTest {
+    fun restoredSecretNotesGoBackIntoTheSecretFolder() = runTest {
         lockedSetup()
         val content = BackupSerializer(target, clock = { 1L }).read(ByteArrayInputStream(backup()))
         RestoreService(target, BackupSerializer(target, clock = { 1L })).restore(content, RestoreMode.REPLACE, pin = "2468").getOrThrow()
 
-        val folder = target.folderDao().all().single()
-        assertThat(folder.name).isEqualTo("Kasa")
-        assertThat(folder.locked).isTrue()
         val main = targetNotes.observe(NoteFilter.InState(NoteState.ACTIVE)).first()
-        assertThat(main.map { it.title.ifEmpty { "<kilitli>" } }).containsExactly("açık", "<kilitli>")
-        val inFolder = targetNotes.observe(NoteFilter.InFolder(folder.id), unlocked = true).first()
-        assertThat(inFolder.single().title).isEqualTo("kasa notu")
+        assertThat(main.map { it.title }).containsExactly("açık")
+        val secret = targetNotes.observe(NoteFilter.Secret).first()
+        assertThat(secret.map { it.title }).containsExactly("kasa notu", "tek kilit")
     }
 
     @Test

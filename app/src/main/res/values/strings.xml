@@ -321,12 +321,12 @@
         <item quantity="other">Imported %d notes from Google Keep</item>
     </plurals>
     <string name="settings_section_security">Lock &amp; privacy</string>
-    <string name="settings_summary_security">PIN, fingerprint and locked notes</string>
-    <string name="security_pin_set">Set a PIN to lock folders and notes</string>
+    <string name="settings_summary_security">PIN, fingerprint and the secret folder</string>
+    <string name="security_pin_set">Set a PIN to use the secret folder</string>
     <string name="security_pin_change">Change the PIN</string>
     <string name="security_biometric">Unlock with fingerprint</string>
     <string name="security_biometric_summary">The PIN still works and is still needed for backups</string>
-    <string name="security_explanation">Locked notes close again whenever you leave the app. In backups they are encrypted with your PIN, so restoring a backup asks for the PIN it was made with. Your fingerprint is never stored by Müsvedde. If you forget the PIN, locked notes cannot be recovered; a longer PIN makes backups harder to crack.</string>
+    <string name="security_explanation">The secret folder opens with your PIN or fingerprint and closes again whenever you leave the app. Its notes never show up on the main page or in search. In backups they are encrypted with your PIN, so restoring a backup asks for the PIN it was made with, and the folder still needs the PIN afterwards. Your fingerprint is never stored by Müsvedde. If you forget the PIN, secret notes cannot be recovered; a longer PIN makes backups harder to crack.</string>
     <string name="lock_pin">PIN</string>
     <string name="lock_unlock">Unlock</string>
     <string name="lock_unlock_title">Enter your PIN</string>
@@ -335,7 +335,7 @@
     <string name="lock_gate_title">This is locked</string>
     <string name="lock_create_pin">Create a PIN</string>
     <string name="lock_change_pin">Change the PIN</string>
-    <string name="lock_pin_explanation">4 to 16 digits. It opens locked folders and notes and protects them in backups. It cannot be recovered if forgotten.</string>
+    <string name="lock_pin_explanation">4 to 16 digits. It opens the secret folder and protects its notes in backups. It cannot be recovered if forgotten.</string>
     <string name="lock_current_pin">Current PIN</string>
     <string name="lock_new_pin">New PIN</string>
     <string name="lock_confirm_pin">Repeat the PIN</string>
@@ -359,22 +359,12 @@
         <item quantity="other">%d locked notes need the backup\'s PIN</item>
     </plurals>
     <string name="auto_restore_enter_pin">Enter PIN</string>
-    <string name="nav_folders">Folders</string>
-    <string name="nav_edit_folders">Edit folders</string>
-    <string name="folder_new_hint">New folder</string>
-    <string name="folder_edit_hint">The lock button asks for the PIN to open the folder. Deleting a folder keeps its notes.</string>
-    <string name="folder_lock">Lock %1$s</string>
-    <string name="folder_unlock">Remove the lock from %1$s</string>
-    <string name="folder_delete">Delete %1$s</string>
-    <string name="folder_locked">Locked</string>
-    <string name="folder_move_title">Move to folder</string>
-    <string name="folder_none">No folder</string>
-    <string name="empty_folder">This folder is empty</string>
-    <string name="action_move_to_folder">Move to folder</string>
     <string name="action_hide_from_main">Hide from the main page</string>
     <string name="action_show_on_main">Show on the main page</string>
-    <string name="action_lock_note">Lock</string>
-    <string name="action_unlock_note">Remove the lock</string>
     <string name="note_locked">Locked note</string>
     <string name="note_hidden">Hidden from the main page</string>
+    <string name="nav_secret">Secret folder</string>
+    <string name="empty_secret">Notes you lock land here</string>
+    <string name="action_move_to_secret">Move to the secret folder</string>
+    <string name="action_move_out_of_secret">Move out of the secret folder</string>
 </resources>

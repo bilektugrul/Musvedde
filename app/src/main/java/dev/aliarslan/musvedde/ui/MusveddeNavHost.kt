@@ -22,9 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import dev.aliarslan.musvedde.domain.Folder
 import dev.aliarslan.musvedde.domain.Label
-import dev.aliarslan.musvedde.ui.folders.EditFoldersDialog
 import dev.aliarslan.musvedde.ui.editor.EditorScreen
 import dev.aliarslan.musvedde.ui.labels.EditLabelsDialog
 import dev.aliarslan.musvedde.ui.errorlog.ErrorLogScreen
@@ -43,14 +41,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun MusveddeNavHost(
     labels: ImmutableList<Label>,
-    folders: ImmutableList<Folder>,
     openNoteRequests: Flow<Long>,
     navController: NavHostController = rememberNavController(),
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showEditLabels by rememberSaveable { mutableStateOf(false) }
-    var showEditFolders by rememberSaveable { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val canGoBack = backStackEntry != null && navController.previousBackStackEntry != null
     val currentNotes = backStackEntry
@@ -75,7 +71,6 @@ fun MusveddeNavHost(
             AppDrawer(
                 current = currentNotes,
                 labels = labels,
-                folders = folders,
                 onNotes = { route ->
                     closeDrawerThen {
                         navController.navigate(route) {
@@ -85,7 +80,6 @@ fun MusveddeNavHost(
                     }
                 },
                 onEditLabels = { closeDrawerThen { showEditLabels = true } },
-                onEditFolders = { closeDrawerThen { showEditFolders = true } },
                 onSettings = { closeDrawerThen { navController.navigate(SettingsRoute) } },
             )
         },
@@ -110,7 +104,7 @@ fun MusveddeNavHost(
                 NotesScreen(
                     onMenu = { scope.launch { drawerState.open() } },
                     onOpenNote = { id -> navController.navigate(EditorRoute(id)) },
-                    onNewNote = { folderId -> navController.navigate(EditorRoute(folderId = folderId ?: NotesRoute.NO_FOLDER)) },
+                    onNewNote = { secret -> navController.navigate(EditorRoute(secret = secret)) },
                 )
             }
             composable<EditorRoute> {
@@ -144,5 +138,4 @@ fun MusveddeNavHost(
         }
     }
     if (showEditLabels) EditLabelsDialog(onDismiss = { showEditLabels = false })
-    if (showEditFolders) EditFoldersDialog(onDismiss = { showEditFolders = false })
 }

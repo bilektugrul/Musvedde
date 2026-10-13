@@ -8,7 +8,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.core.Clock
 import dev.aliarslan.musvedde.data.note.NoteEvent
@@ -18,7 +17,6 @@ import dev.aliarslan.musvedde.data.note.OpenNoteTracker
 import dev.aliarslan.musvedde.data.note.VersionRepository
 import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.di.ApplicationScope
-import dev.aliarslan.musvedde.domain.Folder
 import dev.aliarslan.musvedde.domain.Label
 import dev.aliarslan.musvedde.domain.Note
 import dev.aliarslan.musvedde.domain.NoteColor
@@ -55,7 +53,6 @@ data class EditorUiState(
     val state: NoteState = NoteState.ACTIVE,
     val labelIds: ImmutableSet<Long> = persistentSetOf(),
     val updatedAt: Long? = null,
-    val folderId: Long? = null,
     val hidden: Boolean = false,
     val locked: Boolean = false,
 )
@@ -70,7 +67,6 @@ class EditorViewModel @Inject constructor(
     private val notes: NoteRepository,
     private val versions: VersionRepository,
     private val labels: LabelRepository,
-    private val folders: FolderRepository,
     private val settings: SettingsRepository,
     @param:ApplicationScope private val appScope: CoroutineScope,
     private val clock: Clock,
@@ -90,9 +86,6 @@ class EditorViewModel @Inject constructor(
     val allLabels: StateFlow<ImmutableList<Label>> = labels.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 
-    val allFolders: StateFlow<ImmutableList<Folder>> = folders.observeAll()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
-
     private val events = Channel<EditorEvent>(Channel.BUFFERED)
     val eventFlow = events.receiveAsFlow()
 
@@ -103,11 +96,11 @@ class EditorViewModel @Inject constructor(
 
     val isNewNote: Boolean = noteId == null
 
-    private val newNoteFolderId: Long? = savedStateHandle.get<Long>("folderId")?.takeIf { it > 0 }
+    private val newNoteSecret: Boolean = savedStateHandle.get<Boolean>("secret") == true
 
     private val noteIdFlow = MutableStateFlow(noteId)
 
-    /** True when the note or its folder is locked, so the screen must stay behind the PIN. */
+    /** True for notes in the secret folder, so the screen must stay behind the PIN. */
     @OptIn(ExperimentalCoroutinesApi::class)
     val contentLocked: StateFlow<Boolean> = noteIdFlow
         .flatMapLatest { id -> id?.let(notes::observeIsLocked) ?: flowOf(false) }
@@ -124,7 +117,7 @@ class EditorViewModel @Inject constructor(
     private var sessionStarted = false
 
     init {
-        _uiState.update { it.copy(folderId = newNoteFolderId) }
+        _uiState.update { it.copy(locked = newNoteSecret) }
         noteId?.let(openNotes::open)
         viewModelScope.launch {
             noteId?.let { id -> notes.get(id)?.let(::applyLoaded) }
@@ -153,7 +146,6 @@ class EditorViewModel @Inject constructor(
                 state = note.state,
                 labelIds = note.labelIds.toImmutableSet(),
                 updatedAt = note.updatedAt,
-                folderId = note.folderId,
                 hidden = note.hidden,
                 locked = note.locked,
             )
@@ -164,7 +156,7 @@ class EditorViewModel @Inject constructor(
         val id = idLock.withLock {
             noteId ?: run {
                 if (draft.title.isBlank() && draft.body.isBlank()) return
-                notes.create(draft.title, draft.body, newNoteFolderId).also {
+                notes.create(draft.title, draft.body, newNoteSecret).also {
                     noteId = it
                     noteIdFlow.value = it
                     openNotes.open(it)
@@ -192,7 +184,7 @@ class EditorViewModel @Inject constructor(
     }
 
     private suspend fun ensureNote(): Long = idLock.withLock {
-        noteId ?: notes.create(title.text.toString(), body.text.toString(), newNoteFolderId).also {
+        noteId ?: notes.create(title.text.toString(), body.text.toString(), newNoteSecret).also {
             noteId = it
             noteIdFlow.value = it
             openNotes.open(it)
@@ -235,28 +227,23 @@ class EditorViewModel @Inject constructor(
         }
     }
 
-    fun setFolder(folderId: Long?) = mutate {
-        notes.setFolder(listOf(it), folderId)
-        _uiState.update { s -> s.copy(folderId = folderId) }
-    }
-
-    fun createFolder(name: String) = mutate { id ->
-        folders.create(name).onSuccess { folderId ->
-            notes.setFolder(listOf(id), folderId)
-            _uiState.update { s -> s.copy(folderId = folderId) }
-        }
-    }
-
     fun toggleHidden() = mutate {
         val hidden = !_uiState.value.hidden
         notes.setHidden(listOf(it), hidden)
         _uiState.update { s -> s.copy(hidden = hidden) }
     }
 
-    fun toggleLocked() = mutate {
+    /** Moving a note into the secret folder also closes it, so it is not left open outside the folder. */
+    fun toggleLocked() {
         val locked = !_uiState.value.locked
-        notes.setLocked(listOf(it), locked)
-        _uiState.update { s -> s.copy(locked = locked, pinnedToNotification = s.pinnedToNotification && !locked) }
+        if (locked) {
+            mutateAndClose { notes.setLocked(listOf(it), true) }
+        } else {
+            mutate {
+                notes.setLocked(listOf(it), false)
+                _uiState.update { s -> s.copy(locked = false) }
+            }
+        }
     }
 
     fun archive() = mutateAndClose { id ->

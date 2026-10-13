@@ -320,12 +320,12 @@
         <item quantity="other">Google Keep\'ten %d not aktarıldı</item>
     </plurals>
     <string name="settings_section_security">Kilit ve gizlilik</string>
-    <string name="settings_summary_security">PIN, parmak izi ve kilitli notlar</string>
-    <string name="security_pin_set">Klasör ve not kilitlemek için PIN belirle</string>
+    <string name="settings_summary_security">PIN, parmak izi ve gizli klasör</string>
+    <string name="security_pin_set">Gizli klasörü kullanmak için PIN belirle</string>
     <string name="security_pin_change">PIN\'i değiştir</string>
     <string name="security_biometric">Parmak iziyle aç</string>
     <string name="security_biometric_summary">PIN yine çalışır ve yedekler için yine gerekir</string>
-    <string name="security_explanation">Kilitli notlar uygulamadan her çıktığında yeniden kilitlenir. Yedeklerde PIN\'inle şifrelenir; bu yüzden yedek geri yüklenirken, yedeğin alındığı andaki PIN sorulur. Parmak izin Müsvedde tarafından asla saklanmaz. PIN\'i unutursan kilitli notlar kurtarılamaz; daha uzun bir PIN yedekleri kırmayı zorlaştırır.</string>
+    <string name="security_explanation">Gizli klasör PIN\'in veya parmak izinle açılır, uygulamadan her çıktığında yeniden kilitlenir. İçindeki notlar ana sayfada ve aramalarda hiç görünmez. Yedeklerde PIN\'inle şifrelenir; bu yüzden yedek geri yüklenirken yedeğin alındığı andaki PIN sorulur ve sonrasında da klasör PIN ister. Parmak izin Müsvedde tarafından asla saklanmaz. PIN\'i unutursan gizli notlar kurtarılamaz; daha uzun bir PIN yedekleri kırmayı zorlaştırır.</string>
     <string name="lock_pin">PIN</string>
     <string name="lock_unlock">Kilidi aç</string>
     <string name="lock_unlock_title">PIN\'ini gir</string>
@@ -334,7 +334,7 @@
     <string name="lock_gate_title">Burası kilitli</string>
     <string name="lock_create_pin">PIN oluştur</string>
     <string name="lock_change_pin">PIN\'i değiştir</string>
-    <string name="lock_pin_explanation">4 ile 16 rakam. Kilitli klasör ve notları açar, yedeklerde onları korur. Unutulursa kurtarılamaz.</string>
+    <string name="lock_pin_explanation">4 ile 16 rakam. Gizli klasörü açar ve içindeki notları yedeklerde korur. Unutulursa kurtarılamaz.</string>
     <string name="lock_current_pin">Mevcut PIN</string>
     <string name="lock_new_pin">Yeni PIN</string>
     <string name="lock_confirm_pin">PIN\'i tekrarla</string>
@@ -358,22 +358,12 @@
         <item quantity="other">%d kilitli not yedeğin PIN\'ini bekliyor</item>
     </plurals>
     <string name="auto_restore_enter_pin">PIN gir</string>
-    <string name="nav_folders">Klasörler</string>
-    <string name="nav_edit_folders">Klasörleri düzenle</string>
-    <string name="folder_new_hint">Yeni klasör</string>
-    <string name="folder_edit_hint">Kilit tuşu, klasörü açmak için PIN sorar. Klasörü silmek içindeki notları silmez.</string>
-    <string name="folder_lock">%1$s klasörünü kilitle</string>
-    <string name="folder_unlock">%1$s klasörünün kilidini kaldır</string>
-    <string name="folder_delete">%1$s klasörünü sil</string>
-    <string name="folder_locked">Kilitli</string>
-    <string name="folder_move_title">Klasöre taşı</string>
-    <string name="folder_none">Klasör yok</string>
-    <string name="empty_folder">Bu klasör boş</string>
-    <string name="action_move_to_folder">Klasöre taşı</string>
     <string name="action_hide_from_main">Ana sayfadan gizle</string>
     <string name="action_show_on_main">Ana sayfada göster</string>
-    <string name="action_lock_note">Kilitle</string>
-    <string name="action_unlock_note">Kilidi kaldır</string>
     <string name="note_locked">Kilitli not</string>
     <string name="note_hidden">Ana sayfada gizli</string>
+    <string name="nav_secret">Gizli klasör</string>
+    <string name="empty_secret">Kilitlediğin notlar buraya gelir</string>
+    <string name="action_move_to_secret">Gizli klasöre taşı</string>
+    <string name="action_move_out_of_secret">Gizli klasörden çıkar</string>
 </resources>

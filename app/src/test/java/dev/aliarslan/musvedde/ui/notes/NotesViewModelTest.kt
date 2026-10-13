@@ -7,7 +7,6 @@ import dev.aliarslan.musvedde.data.db.inMemoryDatabase
 import dev.aliarslan.musvedde.data.lock.FakeKeyWrapper
 import dev.aliarslan.musvedde.data.lock.LockConfig
 import dev.aliarslan.musvedde.data.lock.LockManager
-import dev.aliarslan.musvedde.data.note.FolderRepository
 import dev.aliarslan.musvedde.data.note.LabelRepository
 import dev.aliarslan.musvedde.data.note.NoteEvent
 import dev.aliarslan.musvedde.data.note.NoteEventBus
@@ -64,14 +63,13 @@ class NotesViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(section: NotesSection = NotesSection.ACTIVE, folderId: Long = -1L) = NotesViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("section" to section, "labelId" to -1L, "folderId" to folderId)),
+    private fun viewModel(section: NotesSection = NotesSection.ACTIVE) = NotesViewModel(
+        savedStateHandle = SavedStateHandle(mapOf("section" to section, "labelId" to -1L)),
         notes = notes,
         versions = versions,
         noteEvents = noteEvents,
         labels = LabelRepository(db.labelDao(), dispatcher),
         settings = SettingsRepository(InMemoryPreferencesDataStore()),
-        folders = FolderRepository(db, dispatcher),
         lockManager = lockManager,
         appScope = appScope,
     )
@@ -107,45 +105,38 @@ class NotesViewModelTest {
     }
 
     @Test
-    fun folderSectionShowsItsNotesAndTheFolder() = runTest(dispatcher) {
-        val folders = FolderRepository(db, dispatcher)
-        val folder = folders.create("Şiirler").getOrThrow()
-        val inside = notes.create("", "içeride")
-        notes.create("", "dışarıda")
+    fun lockingMovesNotesIntoTheSecretFolder() = runTest(dispatcher) {
+        val secret = notes.create("", "gizli deniz")
+        val open = notes.create("", "açık deniz")
         val main = viewModel()
         collect(main)
         advanceUntilIdle()
-        main.select(inside)
-        main.moveSelectedToFolder(folder)
-        advanceUntilIdle()
 
-        val vm = viewModel(NotesSection.FOLDER, folder)
-        collect(vm)
+        main.select(secret)
         advanceUntilIdle()
+        main.toggleLockedSelected()
+        advanceUntilIdle()
+        assertThat(main.uiState.value.others.map { it.id }).containsExactly(open)
 
-        assertThat(vm.uiState.value.folder?.name).isEqualTo("Şiirler")
-        assertThat(vm.uiState.value.others.map { it.id }).containsExactly(inside)
-    }
+        val folder = viewModel(NotesSection.SECRET)
+        collect(folder)
+        advanceUntilIdle()
+        assertThat(folder.uiState.value.others.map { it.id }).containsExactly(secret)
 
-    @Test
-    fun lockedNotesOpenUpWhenTheSessionUnlocks() = runTest(dispatcher) {
-        lockManager.setPin("1234")
-        val id = notes.create("Başlık", "gizli")
-        val vm = viewModel()
-        collect(vm)
+        main.setQuery("deniz")
+        folder.setQuery("deniz")
         advanceUntilIdle()
-        vm.select(id)
-        vm.toggleLockedSelected()
-        advanceUntilIdle()
-        lockManager.lock()
-        advanceUntilIdle()
+        assertThat(main.uiState.value.others.map { it.id }).containsExactly(open)
+        assertThat(folder.uiState.value.others.map { it.id }).containsExactly(secret)
 
-        assertThat(vm.uiState.value.others.single().title).isEmpty()
-        assertThat(vm.uiState.value.others.single().locked).isTrue()
-
-        lockManager.unlock("1234")
+        folder.setQuery("")
         advanceUntilIdle()
-        assertThat(vm.uiState.value.others.single().title).isEqualTo("Başlık")
+        folder.select(secret)
+        advanceUntilIdle()
+        folder.toggleLockedSelected()
+        main.setQuery("")
+        advanceUntilIdle()
+        assertThat(main.uiState.value.others.map { it.id }).containsExactly(secret, open)
     }
 
     @Test
