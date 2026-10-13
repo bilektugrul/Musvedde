@@ -10,12 +10,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
 import dev.aliarslan.musvedde.data.backup.BackupManager
+import dev.aliarslan.musvedde.data.backup.BackupSettingsStore
 import dev.aliarslan.musvedde.data.backup.BackupTarget
 import dev.aliarslan.musvedde.data.backup.FolderBackupTarget
 import dev.aliarslan.musvedde.data.backup.SilentBackupSource
 import dev.aliarslan.musvedde.data.backup.drive.DriveApi
 import dev.aliarslan.musvedde.data.backup.drive.DriveBackupTarget
 import dev.aliarslan.musvedde.BuildConfig
+import dev.aliarslan.musvedde.data.settings.SettingsRepository
 import dev.aliarslan.musvedde.data.update.UpdateChecker
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -62,6 +64,9 @@ interface BackupTargetsModule {
     @Binds
     @IntoSet
     fun drive(target: DriveBackupTarget): BackupTarget
+
+    @Binds
+    fun settingsStore(repository: SettingsRepository): BackupSettingsStore
 
     @Binds
     fun silentSource(target: DriveBackupTarget): SilentBackupSource

@@ -1,5 +1,7 @@
 package dev.aliarslan.musvedde.domain
 
+import kotlinx.serialization.Serializable
+
 enum class ThemeMode { SYSTEM, LIGHT, DARK, AMOLED }
 
 /** Where the app's colors come from: the wallpaper (Monet), a fixed seed color or the user's own accent color. */
@@ -23,6 +25,7 @@ enum class ContrastLevel(val value: Double) { STANDARD(0.0), MEDIUM(0.5), HIGH(1
  * Fine tuning on top of the generated palette, like the Monet settings of custom ROMs. [luminance] and [chroma]
  * are percentages from -100 to 100; [wholePalette] lets them reach the background colors too.
  */
+@Serializable
 data class MonetTuning(
     val accentColor: Int = DEFAULT_ACCENT,
     val customBackground: Boolean = false,
@@ -55,6 +58,7 @@ enum class BackupFrequency { OFF, DAILY, WEEKLY, MONTHLY }
 
 enum class AnimationSpeed(val factor: Float) { SLOW(1.8f), NORMAL(1.35f), FAST(1.0f) }
 
+@Serializable
 data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val themePalette: ThemePalette = ThemePalette.WALLPAPER,
@@ -101,3 +105,30 @@ data class Settings(
         const val DEFAULT_RETENTION = 10
     }
 }
+
+/** These settings without what belongs to this device (backup folder, Drive connection, backup history). */
+fun Settings.portable(): Settings {
+    val d = Settings()
+    return copy(
+        backupFolderUri = d.backupFolderUri,
+        driveEnabled = d.driveEnabled,
+        driveAccountEmail = d.driveAccountEmail,
+        lastFolderBackupAt = d.lastFolderBackupAt,
+        lastFolderBackupError = d.lastFolderBackupError,
+        lastDriveBackupAt = d.lastDriveBackupAt,
+        lastDriveBackupError = d.lastDriveBackupError,
+        autoRestoreChecked = d.autoRestoreChecked,
+    )
+}
+
+/** Restored preferences on top of [device], which keeps its own backup folder, Drive connection and history. */
+fun Settings.restoredOnto(device: Settings): Settings = copy(
+    backupFolderUri = device.backupFolderUri,
+    driveEnabled = device.driveEnabled,
+    driveAccountEmail = device.driveAccountEmail,
+    lastFolderBackupAt = device.lastFolderBackupAt,
+    lastFolderBackupError = device.lastFolderBackupError,
+    lastDriveBackupAt = device.lastDriveBackupAt,
+    lastDriveBackupError = device.lastDriveBackupError,
+    autoRestoreChecked = device.autoRestoreChecked,
+)

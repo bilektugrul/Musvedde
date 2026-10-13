@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import dev.aliarslan.musvedde.data.backup.BackupSettingsStore
 import dev.aliarslan.musvedde.domain.AnimationSpeed
 import dev.aliarslan.musvedde.domain.BackupFrequency
 import dev.aliarslan.musvedde.domain.ContrastLevel
@@ -21,8 +22,11 @@ import dev.aliarslan.musvedde.domain.MonetTuning
 import dev.aliarslan.musvedde.domain.PreviewSize
 import dev.aliarslan.musvedde.domain.Settings
 import dev.aliarslan.musvedde.domain.ThemeMode
+import dev.aliarslan.musvedde.domain.portable
+import dev.aliarslan.musvedde.domain.restoredOnto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,12 +34,16 @@ import javax.inject.Singleton
 @Singleton
 class SettingsRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-) {
+) : BackupSettingsStore {
     val settings: Flow<Settings> = dataStore.data.map { it.toSettings() }.distinctUntilChanged()
 
     suspend fun update(transform: (Settings) -> Settings) {
         dataStore.edit { prefs -> prefs.write(transform(prefs.toSettings()).sanitized()) }
     }
+
+    override suspend fun current(): Settings = settings.first().portable()
+
+    override suspend fun restore(settings: Settings) = update { settings.restoredOnto(it) }
 
     private object Keys {
         val themeMode = stringPreferencesKey("themeMode")

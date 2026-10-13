@@ -1,5 +1,6 @@
 package dev.aliarslan.musvedde.data.backup
 
+import dev.aliarslan.musvedde.domain.Settings
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -57,7 +58,22 @@ data class BackupContent(
     val labels: List<BackupLabel>,
     val notes: List<BackupNote>,
     val vault: BackupVault? = null,
+    val settings: Settings? = null,
 )
+
+/** Where backups take app settings from and put them back; the PIN and lock keys are never part of it. */
+interface BackupSettingsStore {
+    suspend fun current(): Settings?
+
+    suspend fun restore(settings: Settings)
+
+    companion object {
+        val NONE = object : BackupSettingsStore {
+            override suspend fun current(): Settings? = null
+            override suspend fun restore(settings: Settings) = Unit
+        }
+    }
+}
 
 /** The backup has locked notes and the PIN was not given. */
 class BackupPinRequiredException : Exception("This backup has locked notes; enter the PIN")

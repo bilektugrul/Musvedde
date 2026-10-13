@@ -23,7 +23,8 @@ import dev.aliarslan.musvedde.di.ApplicationScope
 import dev.aliarslan.musvedde.di.CoreModule
 import dev.aliarslan.musvedde.notification.PinnedNoteNotifier
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -82,8 +83,10 @@ class MusveddeApp : Application(), Configuration.Provider {
         pinnedNoteNotifier.start(appScope)
         TrashPurgeWorker.schedule(workManager.get())
         appScope.launch {
-            val current = settings.settings.first()
-            backupScheduler.get().apply(current.backupFrequency, current.driveEnabled)
+            settings.settings
+                .map { it.backupFrequency to it.driveEnabled }
+                .distinctUntilChanged()
+                .collect { (frequency, drive) -> backupScheduler.get().apply(frequency, drive) }
         }
     }
 

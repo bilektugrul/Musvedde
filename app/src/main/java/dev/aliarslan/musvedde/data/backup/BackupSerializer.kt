@@ -6,6 +6,7 @@ import dev.aliarslan.musvedde.data.db.MusveddeDatabase
 import dev.aliarslan.musvedde.data.db.NoteEntity
 import dev.aliarslan.musvedde.data.lock.Aead
 import dev.aliarslan.musvedde.data.lock.BackupKey
+import dev.aliarslan.musvedde.domain.Settings
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.IOException
@@ -29,6 +30,7 @@ class BackupSerializer @Inject constructor(
     private val db: MusveddeDatabase,
     private val clock: Clock,
     private val vaultKeys: VaultKeySource = VaultKeySource { null },
+    private val settingsStore: BackupSettingsStore = BackupSettingsStore.NONE,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -77,6 +79,12 @@ class BackupSerializer @Inject constructor(
             zip.closeEntry()
         }
 
+        settingsStore.current()?.let { settings ->
+            zip.putNextEntry(ZipEntry(SETTINGS))
+            zip.write(json.encodeToString(settings).toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+        }
+
         zip.putNextEntry(ZipEntry(MANIFEST))
         val manifest = BackupManifest(
             appVersion = BuildConfig.VERSION_NAME,
@@ -105,7 +113,8 @@ class BackupSerializer @Inject constructor(
             }
             val data = json.decodeFromString<BackupData>(dataText)
             val vault = entries[VAULT]?.let { json.decodeFromString<BackupVault>(it) }
-            return BackupContent(manifest, data.labels, data.notes, vault)
+            val settings = entries[SETTINGS]?.let { runCatching { json.decodeFromString<Settings>(it).sanitized() }.getOrNull() }
+            return BackupContent(manifest, data.labels, data.notes, vault, settings)
         } catch (e: SerializationException) {
             throw BackupFormatException("Corrupt backup data", e)
         } catch (e: IllegalArgumentException) {
@@ -118,7 +127,7 @@ class BackupSerializer @Inject constructor(
         ZipInputStream(input).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
-                if (entry.name == MANIFEST || entry.name == DATA || entry.name == VAULT) {
+                if (entry.name in setOf(MANIFEST, DATA, VAULT, SETTINGS)) {
                     result[entry.name] = zip.readBytes().toString(Charsets.UTF_8)
                 }
             }
@@ -160,6 +169,7 @@ class BackupSerializer @Inject constructor(
         private const val MANIFEST = "manifest.json"
         private const val DATA = "data.json"
         private const val VAULT = "vault.json"
+        private const val SETTINGS = "settings.json"
         private const val PAGE_SIZE = 500
         private val FILE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 

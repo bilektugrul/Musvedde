@@ -20,6 +20,7 @@ import javax.inject.Inject
 class RestoreService @Inject constructor(
     private val db: MusveddeDatabase,
     private val serializer: BackupSerializer,
+    private val settingsStore: BackupSettingsStore = BackupSettingsStore.NONE,
 ) {
     suspend fun restoreFrom(input: InputStream, mode: RestoreMode, pin: String? = null): Result<Int> =
         runCatching { serializer.read(input) }.fold(
@@ -30,7 +31,8 @@ class RestoreService @Inject constructor(
     /**
      * Restores [content]. A backup with secret notes needs the [pin] it was made with: without it the result is
      * [BackupPinRequiredException], with the wrong one [WrongBackupPinException], and nothing is changed. Every
-     * note from the vault goes back into the secret folder.
+     * note from the vault goes back into the secret folder. Settings in the backup are applied once the notes
+     * are in.
      */
     suspend fun restore(content: BackupContent, mode: RestoreMode, pin: String? = null): Result<Int> = runCatching {
         val lockedNotes = content.vault?.let { vault ->
@@ -98,7 +100,7 @@ class RestoreService @Inject constructor(
                 )
             }
             toInsert.size
-        }
+        }.also { content.settings?.let { settingsStore.restore(it) } }
     }
 
     private companion object {
