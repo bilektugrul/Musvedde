@@ -73,9 +73,11 @@ fun MusveddeNavHost(
                 labels = labels,
                 onNotes = { route ->
                     closeDrawerThen {
-                        navController.navigate(route) {
-                            popUpTo(navController.graph.id) { inclusive = true }
-                            launchSingleTop = true
+                        if (route != currentNotes) {
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     }
                 },
