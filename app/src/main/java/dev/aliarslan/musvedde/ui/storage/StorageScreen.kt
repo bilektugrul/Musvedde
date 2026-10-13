@@ -117,7 +117,14 @@ fun StorageScreen(onBack: () -> Unit, onOpenHistory: (Long) -> Unit, viewModel: 
             item { Summary(current, onClearHistory = { confirmClear = true }) }
             item {
                 Text(
-                    stringResource(R.string.storage_notes_header),
+                    stringResource(
+                        when (sort) {
+                            StorageSort.SIZE -> R.string.storage_notes_by_size
+                            StorageSort.NAME -> R.string.storage_notes_by_name
+                            StorageSort.CONTENT_LENGTH -> R.string.storage_notes_by_length
+                            StorageSort.DATE -> R.string.storage_notes_by_date
+                        },
+                    ),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
@@ -251,6 +258,8 @@ private fun SortBar(sort: StorageSort, descending: Boolean, onSort: (StorageSort
         val direction = when {
             sort == StorageSort.DATE && descending -> R.string.storage_sort_newest_first
             sort == StorageSort.DATE -> R.string.storage_sort_oldest_first
+            sort == StorageSort.NAME && descending -> R.string.storage_sort_z_to_a
+            sort == StorageSort.NAME -> R.string.storage_sort_a_to_z
             descending -> R.string.storage_sort_descending
             else -> R.string.storage_sort_ascending
         }

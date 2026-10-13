@@ -242,7 +242,10 @@
     <string name="storage_text_note">Metin boyutları yazının ham boyutudur. Veritabanı arama dizinini ve etiketleri de tuttuğu için daha büyüktür.</string>
     <string name="storage_clear_all">Tüm sürüm geçmişini temizle</string>
     <string name="storage_clear_all_confirm">Tüm notların kayıtlı tüm sürümleri silinsin mi? Notların olduğu gibi kalır.</string>
-    <string name="storage_notes_header">Boyuta göre notlar</string>
+    <string name="storage_notes_by_size">Boyuta göre notlar</string>
+    <string name="storage_notes_by_name">İsme göre notlar</string>
+    <string name="storage_notes_by_length">İçerik uzunluğuna göre notlar</string>
+    <string name="storage_notes_by_date">Tarihe göre notlar</string>
     <string name="storage_note_detail">Not %1$s · %2$s %3$s</string>
     <plurals name="storage_notes_count">
         <item quantity="one">%d not</item>
@@ -272,6 +275,8 @@
     <string name="storage_sort_ascending">Küçükten büyüğe</string>
     <string name="storage_sort_newest_first">En yeni önce</string>
     <string name="storage_sort_oldest_first">En eski önce</string>
+    <string name="storage_sort_a_to_z">A\'dan Z\'ye</string>
+    <string name="storage_sort_z_to_a">Z\'den A\'ya</string>
     <string name="drive_disconnect_title">Google Drive bağlantısı kesilsin mi?</string>
     <string name="drive_disconnect_confirm">Google Drive\'a otomatik yedekleme durur. Drive\'daki mevcut yedekler orada kalır; yeniden bağlandığında geri yükleyebilirsin.</string>
     <string name="drive_disconnect">Bağlantıyı kes</string>
