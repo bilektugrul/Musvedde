@@ -94,7 +94,7 @@ fun biometricAvailable(context: Context): Boolean {
 }
 
 /** Shows the system fingerprint/face prompt; the app only learns whether it succeeded. */
-fun promptBiometric(activity: Activity, title: String, cancel: String, onSuccess: () -> Unit) {
+fun promptBiometric(activity: Activity, title: String, cancel: String, onError: (String) -> Unit = {}, onSuccess: () -> Unit) {
     val builder = BiometricPrompt.Builder(activity).setTitle(title)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         builder.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
@@ -105,6 +105,10 @@ fun promptBiometric(activity: Activity, title: String, cancel: String, onSuccess
         activity.mainExecutor,
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onSuccess()
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                if (errorCode !in DISMISSED_ERRORS) onError(errString.toString())
+            }
         },
     )
 }
@@ -195,9 +199,11 @@ fun UnlockDialog(onUnlocked: () -> Unit, onDismiss: () -> Unit, viewModel: LockV
     var busy by remember { mutableStateOf(false) }
     val title = stringResource(R.string.lock_unlock_title)
     val cancel = stringResource(R.string.lock_use_pin)
+    var biometricError by remember { mutableStateOf<String?>(null) }
 
     fun biometric() {
-        promptBiometric(activity!!, title, cancel) {
+        biometricError = null
+        promptBiometric(activity!!, title, cancel, onError = { biometricError = it }) {
             viewModel.unlockWithBiometric()
             onUnlocked()
         }
@@ -235,6 +241,7 @@ fun UnlockDialog(onUnlocked: () -> Unit, onDismiss: () -> Unit, viewModel: LockV
                     }
                     else -> Unit
                 }
+                biometricError?.let { ErrorText(it) }
                 if (canUseBiometric) {
                     OutlinedButton(onClick = ::biometric, modifier = Modifier.padding(top = 12.dp)) {
                         Icon(Icons.Outlined.Fingerprint, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
@@ -343,3 +350,9 @@ private fun PinField(value: String, onValueChange: (String) -> Unit, label: Stri
 private fun ErrorText(text: String) {
     Text(text, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
 }
+
+/** Closing the prompt or choosing the PIN instead is not an error worth showing. */
+private val DISMISSED_ERRORS = setOf(
+    BiometricPrompt.BIOMETRIC_ERROR_CANCELED,
+    BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED,
+)

@@ -59,8 +59,9 @@ class LockManager @Inject constructor(
 
     val hasPin: Flow<Boolean> = dataStore.data.map { it[Keys.pinHash] != null }.distinctUntilChanged()
 
+    /** On by default once a PIN exists; the user can turn it off in settings. */
     val biometricEnabled: Flow<Boolean> =
-        dataStore.data.map { it[Keys.pinHash] != null && it[Keys.biometric] == true }.distinctUntilChanged()
+        dataStore.data.map { it[Keys.pinHash] != null && it[Keys.biometric] != false }.distinctUntilChanged()
 
     private var failures = 0
     private var retryAt = 0L

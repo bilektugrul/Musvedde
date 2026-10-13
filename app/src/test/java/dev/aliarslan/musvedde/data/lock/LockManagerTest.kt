@@ -38,6 +38,17 @@ class LockManagerTest {
     }
 
     @Test
+    fun fingerprintIsOnByDefaultOnceAPinExists() = runTest {
+        assertThat(lock.biometricEnabled.first()).isFalse()
+
+        lock.setPin("1234")
+        assertThat(lock.biometricEnabled.first()).isTrue()
+
+        lock.setBiometricEnabled(false)
+        assertThat(lock.biometricEnabled.first()).isFalse()
+    }
+
+    @Test
     fun rejectsInvalidPins() = runTest {
         assertThat(lock.setPin("123")).isEqualTo(SetPinResult.Invalid)
         assertThat(lock.setPin("12ab")).isEqualTo(SetPinResult.Invalid)
