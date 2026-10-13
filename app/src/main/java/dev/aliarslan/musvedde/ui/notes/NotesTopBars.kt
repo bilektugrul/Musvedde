@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -139,6 +140,7 @@ fun SelectionTopBar(
             Text(
                 count.toString(),
                 maxLines = 1,
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Default),
                 modifier = Modifier.semantics { contentDescription = description },
             )
         },
