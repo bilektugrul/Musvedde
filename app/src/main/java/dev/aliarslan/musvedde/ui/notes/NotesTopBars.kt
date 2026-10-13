@@ -46,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.aliarslan.musvedde.R
 import dev.aliarslan.musvedde.domain.ListLayout
@@ -136,7 +138,14 @@ fun SelectionTopBar(
                 Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear_selection))
             }
         },
-        title = { Text(pluralStringResource(R.plurals.selected_count, count, count)) },
+        title = {
+            val description = pluralStringResource(R.plurals.selected_count, count, count)
+            Text(
+                count.toString(),
+                maxLines = 1,
+                modifier = Modifier.semantics { contentDescription = description },
+            )
+        },
         actions = {
             if (section == NotesSection.TRASHED) {
                 IconButton(onClick = onRestore) {
