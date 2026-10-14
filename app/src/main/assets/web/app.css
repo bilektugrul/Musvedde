@@ -882,13 +882,9 @@ kbd {
   overflow: hidden;
   box-shadow: var(--shadow-3);
   border: 1px solid var(--card-border, transparent);
-  view-transition-name: note-morph;
 }
 .note-dialog .editor-body { flex: none; min-height: 160px; }
 
-::view-transition-group(note-morph) { animation-duration: 300ms; animation-timing-function: var(--ease); }
-::view-transition-old(note-morph), ::view-transition-new(note-morph) { height: 100%; object-fit: cover; object-position: top left; }
-::view-transition-group(root) { animation-duration: 200ms; }
 
 /* ---------- popovers & menus ---------- */
 

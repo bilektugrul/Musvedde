@@ -18,40 +18,51 @@ import { Snackbar, ConnectionBanner, ShortcutsDialog } from './Status.js';
 import { DropOverlay, ImportProgress } from './Import.js';
 import { PairScreen, ByeScreen, LoadingScreen } from './Screens.js';
 
-const MORPH = 'note-morph';
 const afterRender = () => new Promise((resolve) => setTimeout(resolve, 0));
-const canTransition = () => typeof document.startViewTransition === 'function' && !prefersReducedMotion();
+const canAnimate = () => typeof Element.prototype.animate === 'function' && !prefersReducedMotion();
+const dialogSurface = () => document.querySelector('.note-dialog .editor');
+const EASE = 'cubic-bezier(0.2, 0, 0, 1)';
 
-export function openWithTransition(id, origin) {
-  if (!origin || !canTransition()) {
-    openNoteById(id);
-    return;
-  }
-  origin.style.viewTransitionName = MORPH;
-  const transition = document.startViewTransition(async () => {
-    origin.style.viewTransitionName = '';
-    openNoteById(id);
-    await afterRender();
-  });
-  transition.finished.finally(() => { origin.style.viewTransitionName = ''; });
+// The dialog itself grows out of the card with one uniform scale, so text never stretches the way a snapshot
+// cross-fade between two differently shaped boxes does.
+function fromCard(card, surface) {
+  const from = card.getBoundingClientRect();
+  const to = surface.getBoundingClientRect();
+  const scale = from.width / to.width;
+  return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${scale})`;
+}
+
+export async function openWithTransition(id, origin) {
+  openNoteById(id);
+  if (!origin || !canAnimate()) return;
+  await afterRender();
+  const surface = dialogSurface();
+  if (!surface) return;
+  surface.style.transformOrigin = 'top left';
+  surface.animate(
+    [{ transform: fromCard(origin, surface), opacity: 0 }, { opacity: 1, offset: 0.35 }, { transform: 'none', opacity: 1 }],
+    { duration: 280, easing: EASE },
+  );
 }
 
 export function closeWithTransition() {
   const open = openNote.value;
   if (!open) return;
-  const dialogSurface = document.querySelector('.note-dialog .editor');
-  if (!dialogSurface || open.id == null || !canTransition()) {
+  const surface = dialogSurface();
+  if (!surface || !canAnimate()) {
     closeNote();
     return;
   }
-  let card = null;
-  const transition = document.startViewTransition(async () => {
-    closeNote();
-    await afterRender();
-    card = document.querySelector(`.card[data-note-id="${open.id}"]`);
-    if (card) card.style.viewTransitionName = MORPH;
-  });
-  transition.finished.finally(() => { if (card) card.style.viewTransitionName = ''; });
+  if (surface.dataset.closing) return;
+  surface.dataset.closing = 'true';
+  const card = open.id == null ? null : document.querySelector(`.card[data-note-id="${open.id}"]`);
+  surface.style.transformOrigin = 'top left';
+  const target = card ? fromCard(card, surface) : 'scale(0.96)';
+  const animation = surface.animate(
+    [{ transform: 'none', opacity: 1 }, { opacity: 1, offset: 0.6 }, { transform: target, opacity: 0 }],
+    { duration: 200, easing: EASE, fill: 'forwards' },
+  );
+  animation.finished.catch(() => {}).finally(closeNote);
 }
 
 function EmptyState() {
