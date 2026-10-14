@@ -377,6 +377,7 @@
     <string name="web_editor_starting">Başlatılıyor…</string>
     <string name="web_editor_running">Açık</string>
     <string name="web_editor_no_wifi">Web editörü için telefonu Wi-Fi\'a bağla.</string>
+    <string name="web_editor_failed">Web editörü başlatılamadı. Ayrıntılar Sorun giderme › Hata günlüğü\'nde.</string>
     <string name="web_editor_no_port">Boş bir port bulunamadı (8080–8090).</string>
     <string name="web_editor_address">Bilgisayarın tarayıcısında bunu aç</string>
     <string name="web_editor_pairing_code">Eşleştirme kodu</string>

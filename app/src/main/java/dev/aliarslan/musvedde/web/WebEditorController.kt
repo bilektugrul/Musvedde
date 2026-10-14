@@ -55,6 +55,7 @@ sealed interface WebEditorStatus {
     data object NoWifi : WebEditorStatus
     data class Running(val address: String) : WebEditorStatus
     data object NoFreePort : WebEditorStatus
+    data object Failed : WebEditorStatus
 }
 
 /** Runs the web editor's server for [WebEditorService] and tells the rest of the app how it is doing. */
@@ -81,9 +82,17 @@ class WebEditorController @Inject constructor(
     private var host: String? = null
 
     fun start() {
-        if (_status.value != WebEditorStatus.Stopped) return
+        if (_status.value != WebEditorStatus.Stopped && _status.value != WebEditorStatus.Failed) return
         _status.value = WebEditorStatus.Starting
-        ContextCompat.startForegroundService(context, Intent(context, WebEditorService::class.java))
+        runCatching { ContextCompat.startForegroundService(context, Intent(context, WebEditorService::class.java)) }
+            .onFailure { fail(it) }
+    }
+
+    /** Something went wrong while starting or serving; the server goes down and the app says so. */
+    internal fun fail(cause: Throwable) {
+        logger.error("Web", "The web editor stopped: ${cause.message}", cause)
+        markStopped()
+        _status.value = WebEditorStatus.Failed
     }
 
     fun stop() {
@@ -130,7 +139,7 @@ class WebEditorController @Inject constructor(
         server = null
         host = null
         running?.let { Thread { it.stop(gracePeriodMillis = 100, timeoutMillis = 1_000) }.start() }
-        _status.value = WebEditorStatus.Stopped
+        if (_status.value != WebEditorStatus.Failed) _status.value = WebEditorStatus.Stopped
     }
 
     private suspend fun stopServer() {

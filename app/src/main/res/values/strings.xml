@@ -378,6 +378,7 @@
     <string name="web_editor_starting">Starting…</string>
     <string name="web_editor_running">On</string>
     <string name="web_editor_no_wifi">Connect the phone to Wi-Fi to use the web editor.</string>
+    <string name="web_editor_failed">The web editor could not start. The details are in Troubleshooting › Error log.</string>
     <string name="web_editor_no_port">Could not find a free port (8080–8090).</string>
     <string name="web_editor_address">Open this in the computer\'s browser</string>
     <string name="web_editor_pairing_code">Pairing code</string>

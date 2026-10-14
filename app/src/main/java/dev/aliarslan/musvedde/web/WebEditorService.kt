@@ -14,6 +14,7 @@ import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import dev.aliarslan.musvedde.MainActivity
 import dev.aliarslan.musvedde.R
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,13 +47,23 @@ class WebEditorService : Service() {
         }
         if (scope != null) return START_NOT_STICKY
 
-        ensureChannel()
-        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(null), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+        try {
+            ensureChannel()
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(null), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+        } catch (e: Exception) {
+            controller.fail(e)
+            stopSelf()
+            return START_NOT_STICKY
+        }
         @Suppress("DEPRECATION")
         wifiLock = getSystemService(WifiManager::class.java)
             .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "musvedde:web-editor")
             .apply { acquire() }
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).also { scope ->
+        val failed = CoroutineExceptionHandler { _, cause ->
+            controller.fail(cause)
+            stopSelf()
+        }
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate + failed).also { scope ->
             controller.run(scope)
             scope.launch {
                 controller.status.collect { status ->

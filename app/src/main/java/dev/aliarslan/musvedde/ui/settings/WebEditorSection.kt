@@ -86,6 +86,10 @@ fun WebEditorSection(viewModel: WebEditorViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
         when (val s = status) {
             WebEditorStatus.Stopped -> Button(onClick = viewModel::start) { Text(stringResource(R.string.web_editor_start)) }
+            WebEditorStatus.Failed -> {
+                StatusMessage(stringResource(R.string.web_editor_failed))
+                Button(onClick = viewModel::start, modifier = Modifier.padding(top = 12.dp)) { Text(stringResource(R.string.web_editor_start)) }
+            }
             WebEditorStatus.Starting -> Text(stringResource(R.string.web_editor_starting), style = MaterialTheme.typography.bodyLarge)
             WebEditorStatus.NoWifi -> StatusMessage(stringResource(R.string.web_editor_no_wifi))
             WebEditorStatus.NoFreePort -> StatusMessage(stringResource(R.string.web_editor_no_port))
@@ -119,7 +123,7 @@ fun WebEditorSection(viewModel: WebEditorViewModel = hiltViewModel()) {
                 )
             }
         }
-        if (status != WebEditorStatus.Stopped) {
+        if (status != WebEditorStatus.Stopped && status != WebEditorStatus.Failed) {
             FilledTonalButton(onClick = viewModel::stop, modifier = Modifier.padding(top = 16.dp)) {
                 Text(stringResource(R.string.web_editor_stop))
             }
