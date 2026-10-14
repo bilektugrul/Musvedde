@@ -29,6 +29,7 @@ import dev.aliarslan.musvedde.ui.errorlog.ErrorLogScreen
 import dev.aliarslan.musvedde.ui.history.HistoryScreen
 import dev.aliarslan.musvedde.ui.storage.StorageScreen
 import dev.aliarslan.musvedde.ui.notes.NotesScreen
+import dev.aliarslan.musvedde.ui.settings.SettingsCategory
 import dev.aliarslan.musvedde.ui.settings.SettingsCategoryScreen
 import dev.aliarslan.musvedde.ui.settings.SettingsHomeScreen
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,8 @@ import kotlinx.coroutines.launch
 fun MusveddeNavHost(
     labels: ImmutableList<Label>,
     openNoteRequests: Flow<Long>,
+    openWebEditorRequests: Flow<Unit>,
+    webEditorRunning: Boolean,
     navController: NavHostController = rememberNavController(),
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -56,6 +59,12 @@ fun MusveddeNavHost(
     LaunchedEffect(navController, openNoteRequests) {
         openNoteRequests.collect { id ->
             navController.navigate(EditorRoute(id)) { launchSingleTop = true }
+        }
+    }
+
+    LaunchedEffect(navController, openWebEditorRequests) {
+        openWebEditorRequests.collect {
+            navController.navigate(SettingsCategoryRoute(SettingsCategory.WEB_EDITOR)) { launchSingleTop = true }
         }
     }
 
@@ -82,6 +91,8 @@ fun MusveddeNavHost(
                     }
                 },
                 onEditLabels = { closeDrawerThen { showEditLabels = true } },
+                webEditorRunning = webEditorRunning,
+                onWebEditor = { closeDrawerThen { navController.navigate(SettingsCategoryRoute(SettingsCategory.WEB_EDITOR)) } },
                 onSettings = { closeDrawerThen { navController.navigate(SettingsRoute) } },
             )
         },

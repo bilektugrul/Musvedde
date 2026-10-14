@@ -42,4 +42,7 @@ object DatabaseModule {
 
     @Provides
     fun noteVersionDao(db: MusveddeDatabase) = db.noteVersionDao()
+
+    @Provides
+    fun webDeviceDao(db: MusveddeDatabase) = db.webDeviceDao()
 }

@@ -369,4 +369,27 @@
     <string name="empty_secret">Notes you lock land here</string>
     <string name="action_move_to_secret">Move to the secret folder</string>
     <string name="action_move_out_of_secret">Move out of the secret folder</string>
+    <string name="nav_web_editor">Web editor</string>
+    <string name="settings_section_web_editor">Web editor</string>
+    <string name="settings_summary_web_editor">Edit notes from a computer on the same Wi-Fi</string>
+    <string name="web_editor_explanation">Open your notes in a computer\'s browser while the phone and the computer are on the same Wi-Fi. It keeps running until you stop it, even with the app in the background. The secret folder never shows up there.</string>
+    <string name="web_editor_start">Start</string>
+    <string name="web_editor_stop">Stop</string>
+    <string name="web_editor_starting">Starting…</string>
+    <string name="web_editor_running">On</string>
+    <string name="web_editor_no_wifi">Connect the phone to Wi-Fi to use the web editor.</string>
+    <string name="web_editor_no_port">Could not find a free port (8080–8090).</string>
+    <string name="web_editor_address">Open this in the computer\'s browser</string>
+    <string name="web_editor_pairing_code">Pairing code</string>
+    <string name="web_editor_pairing_hint">Asked once by each new computer. It changes after every pairing.</string>
+    <string name="web_editor_devices">Paired computers</string>
+    <string name="web_editor_no_devices">No computer is paired yet.</string>
+    <string name="web_editor_last_seen">Last seen %1$s</string>
+    <string name="web_editor_remove">Remove %1$s</string>
+    <string name="web_editor_remove_all">Remove all computers</string>
+    <string name="web_editor_remove_all_confirm">Every computer will need the pairing code again.</string>
+    <string name="web_editor_warning">The connection is not encrypted. Use the web editor only on networks you trust, like your home Wi-Fi.</string>
+    <string name="web_editor_channel">Web editor</string>
+    <string name="web_editor_notification_title">Web editor is on</string>
+    <string name="web_editor_notification_waiting">Waiting for Wi-Fi…</string>
 </resources>

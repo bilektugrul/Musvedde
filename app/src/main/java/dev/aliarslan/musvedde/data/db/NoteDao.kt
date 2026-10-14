@@ -61,6 +61,17 @@ interface NoteDao {
     )
     fun searchSummaries(ftsQuery: String, secret: Boolean): Flow<List<NoteSummaryRow>>
 
+    /** Every note outside the secret folder, in full, for the web editor. */
+    @Query(
+        """
+        SELECT n.id, n.title, n.body, n.color, n.pinnedToTop, n.state, n.position, n.createdAt, n.updatedAt,
+            n.trashedAt, (SELECT GROUP_CONCAT(nl.labelId) FROM note_labels nl WHERE nl.noteId = n.id) AS labelIds
+        FROM notes n
+        WHERE n.locked = 0
+        """,
+    )
+    fun observeWebNotes(): Flow<List<WebNoteRow>>
+
     @Query("SELECT * FROM notes WHERE pinnedToNotification = 1 AND state = 'ACTIVE' AND locked = 0")
     fun observePinnedToNotification(): Flow<List<NoteEntity>>
 

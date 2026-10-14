@@ -368,4 +368,27 @@
     <string name="empty_secret">Kilitlediğin notlar buraya gelir</string>
     <string name="action_move_to_secret">Gizli klasöre taşı</string>
     <string name="action_move_out_of_secret">Gizli klasörden çıkar</string>
+    <string name="nav_web_editor">Web editörü</string>
+    <string name="settings_section_web_editor">Web editörü</string>
+    <string name="settings_summary_web_editor">Aynı Wi-Fi\'daki bir bilgisayardan notları düzenle</string>
+    <string name="web_editor_explanation">Telefon ve bilgisayar aynı Wi-Fi\'dayken notlarını bilgisayarın tarayıcısında aç. Sen durdurana kadar, uygulama arka plandayken bile çalışır. Gizli klasör orada hiç görünmez.</string>
+    <string name="web_editor_start">Başlat</string>
+    <string name="web_editor_stop">Durdur</string>
+    <string name="web_editor_starting">Başlatılıyor…</string>
+    <string name="web_editor_running">Açık</string>
+    <string name="web_editor_no_wifi">Web editörü için telefonu Wi-Fi\'a bağla.</string>
+    <string name="web_editor_no_port">Boş bir port bulunamadı (8080–8090).</string>
+    <string name="web_editor_address">Bilgisayarın tarayıcısında bunu aç</string>
+    <string name="web_editor_pairing_code">Eşleştirme kodu</string>
+    <string name="web_editor_pairing_hint">Her yeni bilgisayar bir kez sorar. Her eşleştirmeden sonra değişir.</string>
+    <string name="web_editor_devices">Eşleşmiş bilgisayarlar</string>
+    <string name="web_editor_no_devices">Henüz eşleşmiş bilgisayar yok.</string>
+    <string name="web_editor_last_seen">Son görülme: %1$s</string>
+    <string name="web_editor_remove">%1$s kaldır</string>
+    <string name="web_editor_remove_all">Tüm bilgisayarları kaldır</string>
+    <string name="web_editor_remove_all_confirm">Her bilgisayar eşleştirme kodunu yeniden isteyecek.</string>
+    <string name="web_editor_warning">Bağlantı şifrelenmez. Web editörünü sadece ev Wi-Fi\'ın gibi güvendiğin ağlarda kullan.</string>
+    <string name="web_editor_channel">Web editörü</string>
+    <string name="web_editor_notification_title">Web editörü açık</string>
+    <string name="web_editor_notification_waiting">Wi-Fi bekleniyor…</string>
 </resources>

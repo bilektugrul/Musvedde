@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
     private val openNoteRequests = Channel<Long>(Channel.CONFLATED)
+    private val openWebEditorRequests = Channel<Unit>(Channel.CONFLATED)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +36,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val labels by viewModel.labels.collectAsStateWithLifecycle()
+            val webEditorRunning by viewModel.webEditorRunning.collectAsStateWithLifecycle()
             val loaded = settings ?: return@setContent
             MusveddeTheme(loaded) {
                 Surface(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }, color = MaterialTheme.colorScheme.background) {
-                    MusveddeNavHost(labels = labels, openNoteRequests = openNoteRequests.receiveAsFlow())
+                    MusveddeNavHost(
+                        labels = labels,
+                        openNoteRequests = openNoteRequests.receiveAsFlow(),
+                        openWebEditorRequests = openWebEditorRequests.receiveAsFlow(),
+                        webEditorRunning = webEditorRunning,
+                    )
                 }
             }
         }
@@ -55,14 +62,24 @@ class MainActivity : ComponentActivity() {
             openNoteRequests.trySend(noteId)
             intent?.removeExtra(EXTRA_NOTE_ID)
         }
+        if (intent?.getBooleanExtra(EXTRA_WEB_EDITOR, false) == true) {
+            openWebEditorRequests.trySend(Unit)
+            intent.removeExtra(EXTRA_WEB_EDITOR)
+        }
     }
 
     companion object {
         const val EXTRA_NOTE_ID = "dev.aliarslan.musvedde.NOTE_ID"
+        const val EXTRA_WEB_EDITOR = "dev.aliarslan.musvedde.WEB_EDITOR"
 
         fun openNoteIntent(context: Context, noteId: Long) =
             Intent(context, MainActivity::class.java)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .putExtra(EXTRA_NOTE_ID, noteId)
+
+        fun openWebEditorIntent(context: Context) =
+            Intent(context, MainActivity::class.java)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(EXTRA_WEB_EDITOR, true)
     }
 }

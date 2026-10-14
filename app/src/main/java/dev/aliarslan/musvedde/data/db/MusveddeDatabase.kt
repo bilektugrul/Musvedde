@@ -13,16 +13,18 @@ import androidx.room.RoomDatabase
         ErrorLogEntity::class,
         NoteVersionEntity::class,
         PendingVersionEntity::class,
+        WebDeviceEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 5, to = 6)],
 )
 abstract class MusveddeDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun labelDao(): LabelDao
     abstract fun errorLogDao(): ErrorLogDao
     abstract fun noteVersionDao(): NoteVersionDao
+    abstract fun webDeviceDao(): WebDeviceDao
 
     companion object {
         const val NAME = "musvedde.db"

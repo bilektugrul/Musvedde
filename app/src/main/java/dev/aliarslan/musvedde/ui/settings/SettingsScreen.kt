@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
@@ -189,6 +190,7 @@ fun SettingsCategoryScreen(
                         onRestore = { showRestore = true },
                         onDriveSetup = { showDriveSetup = true },
                     )
+                    SettingsCategory.WEB_EDITOR -> WebEditorSection()
                     SettingsCategory.TROUBLESHOOTING -> {
                         ActionRow(stringResource(R.string.nav_error_log), stringResource(R.string.settings_error_log_summary), onClick = onErrorLog)
                         DeveloperSection()
@@ -247,6 +249,7 @@ private fun SettingsCategory.titleRes() = when (this) {
     SettingsCategory.NOTIFICATIONS -> R.string.settings_section_notifications
     SettingsCategory.SECURITY -> R.string.settings_section_security
     SettingsCategory.BACKUP -> R.string.settings_section_backup
+    SettingsCategory.WEB_EDITOR -> R.string.settings_section_web_editor
     SettingsCategory.STORAGE -> R.string.settings_section_storage
     SettingsCategory.TROUBLESHOOTING -> R.string.settings_section_troubleshooting
     SettingsCategory.ABOUT -> R.string.settings_section_about
@@ -260,6 +263,7 @@ private fun SettingsCategory.summaryRes() = when (this) {
     SettingsCategory.NOTIFICATIONS -> R.string.settings_summary_notifications
     SettingsCategory.SECURITY -> R.string.settings_summary_security
     SettingsCategory.BACKUP -> R.string.settings_summary_backup
+    SettingsCategory.WEB_EDITOR -> R.string.settings_summary_web_editor
     SettingsCategory.STORAGE -> R.string.settings_storage_summary
     SettingsCategory.TROUBLESHOOTING -> R.string.settings_summary_troubleshooting
     SettingsCategory.ABOUT -> R.string.settings_summary_about
@@ -273,6 +277,7 @@ private fun SettingsCategory.icon(): ImageVector = when (this) {
     SettingsCategory.NOTIFICATIONS -> Icons.Outlined.Notifications
     SettingsCategory.SECURITY -> Icons.Outlined.Lock
     SettingsCategory.BACKUP -> Icons.Outlined.Backup
+    SettingsCategory.WEB_EDITOR -> Icons.Outlined.Computer
     SettingsCategory.STORAGE -> Icons.Outlined.Storage
     SettingsCategory.TROUBLESHOOTING -> Icons.Outlined.BugReport
     SettingsCategory.ABOUT -> Icons.Outlined.Info

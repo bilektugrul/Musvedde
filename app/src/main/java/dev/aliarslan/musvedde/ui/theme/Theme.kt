@@ -143,6 +143,20 @@ fun MusveddeTheme(settings: Settings, content: @Composable () -> Unit) {
     }
 }
 
+/** The same scheme [MusveddeTheme] builds, for use outside composition. */
+fun appColorScheme(context: Context, settings: Settings, systemDark: Boolean): ColorScheme {
+    val dark = isDarkTheme(settings.themeMode, systemDark)
+    val wantsWallpaper = settings.themePalette == ThemePalette.WALLPAPER
+    val systemDynamic = if (wantsWallpaper && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        null
+    }
+    val wallpaperSeed = if (wantsWallpaper) wallpaperSeedColor(context) else null
+    val base = buildColorScheme(settings.themePalette, settings.paletteStyle, settings.contrast, dark, wallpaperSeed, systemDynamic, settings.monet)
+    return colorSchemeFor(settings.themeMode, systemDark, base)
+}
+
 private fun wallpaperSeedColor(context: Context): Int? = runCatching {
     WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)?.primaryColor?.toArgb()
 }.getOrNull()

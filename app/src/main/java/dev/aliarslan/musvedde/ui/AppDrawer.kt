@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Lightbulb
@@ -35,6 +36,8 @@ fun AppDrawer(
     labels: ImmutableList<Label>,
     onNotes: (NotesRoute) -> Unit,
     onEditLabels: () -> Unit,
+    webEditorRunning: Boolean,
+    onWebEditor: () -> Unit,
     onSettings: () -> Unit,
 ) {
     ModalDrawerSheet {
@@ -74,6 +77,13 @@ fun AppDrawer(
                 onNotes(NotesRoute(NotesSection.TRASHED))
             }
             HorizontalDivider(Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
+            DrawerItem(
+                Icons.Outlined.Computer,
+                stringResource(R.string.nav_web_editor),
+                false,
+                badge = if (webEditorRunning) stringResource(R.string.web_editor_running) else null,
+                onClick = onWebEditor,
+            )
             DrawerItem(Icons.Outlined.Settings, stringResource(R.string.nav_settings), false, onClick = onSettings)
             Spacer(Modifier.height(16.dp))
         }
@@ -81,11 +91,12 @@ fun AppDrawer(
 }
 
 @Composable
-private fun DrawerItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+private fun DrawerItem(icon: ImageVector, label: String, selected: Boolean, badge: String? = null, onClick: () -> Unit) {
     NavigationDrawerItem(
         icon = { Icon(icon, contentDescription = null) },
         label = { Text(label) },
         selected = selected,
+        badge = badge?.let { { Text(it, color = MaterialTheme.colorScheme.primary) } },
         onClick = onClick,
         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
     )
