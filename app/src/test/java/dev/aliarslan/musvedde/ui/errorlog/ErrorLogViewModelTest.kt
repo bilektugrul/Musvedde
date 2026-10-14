@@ -90,7 +90,7 @@ class ErrorLogViewModelTest {
 
         val text = vm.shareText()
 
-        assertThat(text.lines().first()).startsWith("Müsvedde 0.7.0 · ")
+        assertThat(text.lines().first()).startsWith("Müsvedde 0.8.0 · ")
         assertThat(text.lines().first()).contains("(API ")
         assertThat(text.indexOf("boom")).isLessThan(text.indexOf("folder missing"))
         assertThat(text).contains("IllegalStateException: x")
