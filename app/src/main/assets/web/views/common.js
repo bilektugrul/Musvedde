@@ -176,16 +176,21 @@ export function useAutosize(ref, value, enabled = true) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !enabled) return;
+    let width = -1;
     const fit = () => {
+      if (!el.getClientRects().length) return;
+      width = el.clientWidth;
       el.style.height = 'auto';
       el.style.height = `${el.scrollHeight}px`;
     };
-    if (el.getClientRects().length) fit();
-    else {
-      // Not laid out yet (e.g. inside a dialog that opens in the same commit).
-      const frame = requestAnimationFrame(fit);
-      return () => cancelAnimationFrame(frame);
-    }
+    fit();
+    // A textarea in a dialog that is still opening (or mid view transition) has no size yet, and a narrower
+    // box wraps into more lines; measure again once it shows up or its width changes.
+    const observer = new ResizeObserver(() => {
+      if (el.clientWidth !== width) fit();
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [value, enabled]);
 }
 
