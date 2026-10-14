@@ -55,10 +55,10 @@ Telefondaki arayüz:
 Veritabanı:
 
 - Yeni `web_devices` tablosu: `id`, `name`, `tokenHash` (SHA-256, hex), `createdAt`, `lastSeenAt`.
-- Room sürümü 5'ten 6'ya çıkar, `MIGRATION_5_6` eklenir ve şema JSON'u commit edilir.
+- Room sürümü 5'ten 6'ya çıkar. Yeni tablo için `AutoMigration(5, 6)` yeterlidir, şema JSON'u commit edilir.
 - Yedeklere dahil edilmez, çünkü cihaza özgüdür.
 
-Yeni bağımlılıklar: `ktor-server-cio`, `ktor-server-content-negotiation`, `ktor-serialization-kotlinx-json`, `ktor-server-compression`, `ktor-server-sse`. Bunlar version catalog'a eklenir.
+Yeni bağımlılıklar: `ktor-server-cio`, `ktor-server-content-negotiation`, `ktor-serialization-kotlinx-json`, `ktor-server-compression`, `ktor-server-sse`, `ktor-server-status-pages`. Bunlar version catalog'a eklenir.
 
 Manifest izinleri: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `WAKE_LOCK`.
 
@@ -93,12 +93,13 @@ Manifest izinleri: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, 
 | Uç nokta | İş |
 |---|---|
 | `GET /`, `GET /assets/*` | Sayfa ve statik dosyalar. Önbellek ETag ile yapılır, dosya adresleri `versionCode` içerir. |
-| `POST /api/pair` | `{code, name}` alır. 200 ile çerez, 403 (yanlış kod) ya da 429 (`retryAfter`) döner. |
-| `GET /api/bootstrap` | Notlar (tam metin) ve etiketler. Tema renkleri: Monet dahil, telefonun ürettiği `ColorScheme`'in hex değerleri ve not renkleri. Dil metinleri, sıralama ve güncel `revision`. |
+| `POST /api/pair` | `{code, name}` alır. 200 ile çerez, 403 (yanlış kod) ya da 429 (`retryAfterSeconds`) döner. |
+| `GET /api/bootstrap` | Notlar (tam metin) ve etiketler. Tema renkleri: Monet dahil, telefonun ürettiği `ColorScheme`'in hex değerleri ve not renkleri. Uygulamanın dili (`locale`), sürümü ve güncel `revision`. |
 | `GET /api/notes?since=rev` | `rev`'den sonra değişen notlar ve kaybolan id'ler: `{notes, deletedIds, revision}`. `rev` oturumun günlüğünden eskiyse `410` döner ve tarayıcı `bootstrap`'ı yeniden yükler. |
 | `POST /api/notes` | `{title, body, color, labelIds}` ile oluşturur ve oluşan notu döner. |
 | `PATCH /api/notes/{id}` | `{title, body, baseUpdatedAt, force?}` alır. Not bu arada değiştiyse 409 ve güncel not döner. |
-| `POST /api/notes/bulk` | `{ids, action, value?}` alır. `action` şunlardan biri: `color`, `addLabel`, `removeLabel`, `pin`, `unpin`, `archive`, `unarchive`, `trash`, `restore`, `deleteForever`, `emptyTrash`. |
+| `POST /api/notes/bulk` | `{ids, action, color?, labelId?}` alır. `action` şunlardan biri: `color`, `addLabel`, `removeLabel`, `pin`, `unpin`, `archive`, `unarchive`, `trash`, `restore`, `deleteForever`. |
+| `POST /api/trash/empty` | Çöp kutusundaki gizli olmayan notları kalıcı olarak siler. |
 | `POST`, `DELETE /api/notes/{id}/session` | `VersionRepository.beginSession` ve `endSession`. Web'deki düzenlemeler de not geçmişine girer. SSE bağlantısı kopunca açık oturumlar kapatılır. |
 | `POST /api/labels`, `PATCH`/`DELETE /api/labels/{id}` | Etiket oluşturma, yeniden adlandırma, silme. |
 | `POST /api/import/keep` | Takeout zip'ini akış olarak okur, 200 MB sınırı var. `KeepImporter` ve `RestoreService` (MERGE) kullanılır. `{added, skipped}` döner. |
@@ -184,7 +185,7 @@ Kenar çubuğu (Notlar, Arşiv, Çöp kutusu, etiketler), düzenleyici bileşeni
 ### Görünüm
 
 - **Tema:** `bootstrap` ve `theme` olaylarıyla gelen renkler CSS değişkenlerine yazılır, telefondaki tema ve Monet ayarı birebir taşınır. Not renkleri telefondaki açık ve koyu tablolardan gelir.
-- **Dil:** Uygulamanın dili kullanılır, metinler `bootstrap` ile gelir.
+- **Dil:** Uygulamanın dili kullanılır. `bootstrap` dili bildirir, Türkçe ve İngilizce metinler ön yüzün `i18n.js` dosyasındadır.
 - **Ekran boyutu:** Tasarım masaüstü önceliklidir. Dar ekranda kenar çubuğu çekmeceye dönüşür.
 
 ## Hata yönetimi
@@ -208,7 +209,7 @@ Kenar çubuğu (Notlar, Arşiv, Çöp kutusu, etiketler), düzenleyici bileşeni
   - Toplu işlemler.
   - Takeout yükleme ve bozuk zip.
   - Revizyon günlüğü, `since` ve `410`.
-- **Birim testleri:** `WebDeviceDao`, `MIGRATION_5_6`, kod üretimi ve kısıtlama.
+- **Birim testleri:** `WebNoteSync` revizyon sınırları.
 - **Web arayüzü:** Otomatik JS testi yok. Uygulama bitince yerleşik tarayıcıyla uçtan uca elle doğrulanır:
   - eşleştirme
   - hızlı ekleme döngüsü
