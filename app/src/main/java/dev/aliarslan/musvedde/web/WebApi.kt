@@ -54,6 +54,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.InputStream
@@ -351,8 +353,9 @@ private fun guard(env: WebEnvironment) = createApplicationPlugin("WebGuard") {
 private class EditingSessions(private val versions: VersionRepository) {
     private val open = ConcurrentHashMap<Long, MutableSet<Long>>()
     private val seen = ConcurrentHashMap<Pair<Long, Long>, Pair<String, String>>()
+    private val mutex = Mutex()
 
-    suspend fun ensure(device: Long, note: Note) {
+    suspend fun ensure(device: Long, note: Note) = mutex.withLock {
         val notes = open.getOrPut(device) { ConcurrentHashMap.newKeySet() }
         if (open.values.none { note.id in it }) versions.beginSession(note.id, note.title, note.body, note.updatedAt)
         notes += note.id
@@ -374,7 +377,7 @@ private class EditingSessions(private val versions: VersionRepository) {
         open.values.forEach { it -= noteId }
     }
 
-    suspend fun end(device: Long, noteId: Long) {
+    suspend fun end(device: Long, noteId: Long) = mutex.withLock {
         open[device]?.remove(noteId)
         seen.remove(device to noteId)
         if (open.values.none { noteId in it }) versions.endSession(noteId)

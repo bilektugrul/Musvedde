@@ -78,8 +78,8 @@ class WebEditorController @Inject constructor(
 
     private val closing = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val assets = ConcurrentHashMap<String, ByteArray>()
-    private var server: EmbeddedServer<*, *>? = null
-    private var host: String? = null
+    @Volatile private var server: EmbeddedServer<*, *>? = null
+    @Volatile private var host: String? = null
 
     fun start() {
         if (_status.value != WebEditorStatus.Stopped && _status.value != WebEditorStatus.Failed) return
